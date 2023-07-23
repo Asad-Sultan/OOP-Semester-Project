@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -34,7 +35,7 @@ void printSuccess(string text) {
 }
 
 void printWarning(string text) {
-  setColor(6);
+  setColor(14);
   cout << text;
   setColor(7);
 }
@@ -57,7 +58,7 @@ protected:
   string password;
   string firstName;
   string lastName;
-  long int contactNo;
+  string contactNo;
   string address;
 
   bool lengthCheck(string text, int lenMin, int lenMax) {
@@ -68,12 +69,17 @@ protected:
   }
 
 public:
-  User(string un = "",
-       string pw = "",
-       string fN = "",
-       string lN = "",
-       long int cN = 0,
-       string add = "") {
+  User(bool incrementCount) {
+    if (incrementCount)
+      ++userCount;
+  }
+
+  User(string un,
+       string pw,
+       string fN,
+       string lN,
+       string cN,
+       string add) {
     ++userCount;
     username = un;
     password = pw;
@@ -83,7 +89,7 @@ public:
     address = add;
   }
 
-  // ----- Setters ----- //
+  // ----- Setters & Other Functions ----- //
   static void setUserCount(int uC) { userCount = uC; }
   static void setCurrentUserType(char cUT) { currentUserType = cUT; }
   static void setCurrentUserIndex(int cUI) { currentUserIndex = cUI; }
@@ -125,7 +131,7 @@ public:
   string getPassword() { return password; }
   string getFirstName() { return firstName; }
   string getLastName() { return lastName; }
-  long int getContactNumber() { return contactNo; }
+  string getContactNumber() { return contactNo; }
   string getAddress() { return address; }
 
   // ----- Input Setters ----- //
@@ -200,25 +206,62 @@ public:
 class Admin : public User {
 private:
   static int adminCount;
+  bool headAdmin;
 
 public:
-  Admin(string un = "",
-        string pw = "",
-        string fN = "",
-        string lN = "",
-        long int cN = 0,
-        string add = "") : User(un, pw, fN, lN, cN, add) {}
+  Admin(bool incrementCount) : User(incrementCount) {
+    if (incrementCount)
+      ++adminCount;
+  }
 
+  Admin(string un,
+        string pw,
+        string fN,
+        string lN,
+        string cN,
+        string add,
+        bool hA = false) : User(un, pw, fN, lN, cN, add) {
+    ++adminCount;
+    headAdmin = hA;
+  }
+
+  // ----- Setters ----- //
   static void setAdminCount(int aC) { adminCount = aC; }
 
   // ----- Getters ----- //
   static int getAdminCount() { return adminCount; }
+  bool getAdminRank() { return headAdmin; }
 
   // ----- Input Setters ----- //
+  void inputAdminRank() {
+    char input;
+
+    do {
+      cout << "Set rank to head admin? (y/n): ";
+      cin >> input;
+      input = tolower(input);
+
+      if (input == 'y') {
+        headAdmin = true;
+        break;
+      } else if (input == 'n') {
+        headAdmin = false;
+        break;
+      } else {
+        printError("Invalid input!\n\n");
+      }
+    } while (true);
+  }
+
+  void inputData() {
+    User::inputData();
+    inputAdminRank();
+  }
 };
 
 struct Subject {
-  string name;
+  Subject() : code("-"), attendance(-1), gpa(-1) {}
+  string code;
   int attendance;
   float gpa;
 };
@@ -231,6 +274,8 @@ private:
   int rollNo;
   string studentID;
   float semesterGPA;
+  int noOfSubjects;
+  vector<Subject> subjects;
 
   string offeredPrograms[5] = {"BSSE", "BSCS", "BSDS", "BSAI", "BSGM"};
 
@@ -239,23 +284,32 @@ private:
   }
 
 public:
-  Student(string un = "",
-          string pw = "",
-          string fN = "",
-          string lN = "",
-          long int cN = 0,
-          string add = "",
-          string p = "",
-          int s = 0,
-          int rN = 0,
-          string sID = "",
-          float sGPA = 0.0) : User(un, pw, fN, lN, cN, add) {
+  Student(bool incrementCount) : User(incrementCount) {
+    if (incrementCount)
+      ++studentCount;
+  }
+
+  Student(string un,
+          string pw,
+          string fN,
+          string lN,
+          string cN,
+          string add,
+          string p,
+          int s,
+          int rN,
+          string sID,
+          float sGPA,
+          int nOS,
+          vector<Subject> sbj) : User(un, pw, fN, lN, cN, add) {
     ++studentCount;
     program = p;
     semester = s;
     rollNo = rN;
     studentID = sID;
     semesterGPA = sGPA;
+    noOfSubjects = nOS;
+    subjects = sbj;
   }
 
   static void setStudentCount(int sC) { studentCount = sC; }
@@ -266,6 +320,18 @@ public:
   int getSemester() { return semester; }
   int getRollNo() { return rollNo; }
   string getStudentID() { return studentID; }
+
+  float getSemesterGPA() {
+    float sum = 0;
+    for (int i = 0; i < noOfSubjects; i++) {
+      sum += subjects[i].gpa;
+    }
+    semesterGPA = sum / noOfSubjects;
+    return semesterGPA;
+  }
+
+  int getNoOfSubjects() { return noOfSubjects; }
+  vector<Subject> getSubjects() { return subjects; }
 
   // ----- Input Setters ----- //
   void inputProgram() {
@@ -288,13 +354,13 @@ public:
       } while (true);
 
       if (searchStudents(offeredPrograms[option - 1], semester, rollNo) != -1)
-        printError("Duplicate record found!\n\n");
+        printError("Duplicate student record found!\n\n");
       else
         break;
     } while (true);
 
     program = offeredPrograms[option - 1];
-    void createStudentID();
+    createStudentID();
   }
 
   void inputSemester() {
@@ -309,12 +375,12 @@ public:
       } while (true);
 
       if (searchStudents(program, semester, rollNo) != -1)
-        printError("Duplicate record found!\n\n");
+        printError("Duplicate student record found!\n\n");
       else
         break;
     } while (true);
 
-    void createStudentID();
+    createStudentID();
   }
 
   void inputRollNo() {
@@ -322,12 +388,38 @@ public:
       cout << "Input roll number: ";
       cin >> rollNo;
       if (searchStudents(program, semester, rollNo) != -1)
-        printError("Duplicate record found!\n\n");
+        printError("Duplicate student record found!\n\n");
       else
         break;
     } while (true);
 
-    void createStudentID();
+    createStudentID();
+  }
+
+  void inputSubjects() {
+    cout << endl;
+
+    do {
+      cout << "Input number of subjects (5-8): ";
+      cin >> noOfSubjects;
+
+      if (noOfSubjects < 5 || noOfSubjects > 8)
+        printError("A student can have minimum 5 and maximum 8 subjects\n\n");
+      else
+        break;
+    } while (true);
+
+    cout << endl;
+    for (int i = 0; i < noOfSubjects; i++) {
+      Subject tempSubject;
+
+      cout << "Enter subject " << i + 1 << " code: ";
+      cin >> tempSubject.code;
+      tempSubject.attendance = -1;
+      tempSubject.gpa = -1;
+
+      subjects.push_back(tempSubject);
+    }
   }
 
   void inputData() {
@@ -335,6 +427,7 @@ public:
     inputProgram();
     inputSemester();
     inputRollNo();
+    inputSubjects();
   }
 };
 
@@ -343,12 +436,17 @@ private:
   static int teacherCount;
 
 public:
-  Teacher(string un = "",
-          string pw = "",
-          string fN = "",
-          string lN = "",
-          long int cN = 0,
-          string add = "") : User(un, pw, fN, lN, cN, add) {}
+  Teacher(bool incrementCount) : User(incrementCount) {
+    if (incrementCount)
+      ++teacherCount;
+  }
+
+  Teacher(string un,
+          string pw,
+          string fN,
+          string lN,
+          string cN,
+          string add) : User(un, pw, fN, lN, cN, add) {}
 
   static void setTeacherCount(int aC) { teacherCount = aC; }
 
@@ -375,6 +473,61 @@ vector<Student> studentRecords;
 vector<Teacher> teacherRecords;
 
 // ----- Data Handling ----- //
+
+void saveData() {
+  fstream writer("data.csv", ios::out);
+  int users = User::getUserCount();
+  int admins = Admin::getAdminCount();
+  int students = Student::getStudentCount();
+  int teachers = Teacher::getTeacherCount();
+
+  writer << users << endl;
+  writer << admins << endl;
+  writer << students << endl;
+  writer << teachers << endl;
+
+  for (int i = 0; i < admins; i++) {
+    writer << adminRecords[i].getUsername() << ",";
+    writer << adminRecords[i].getPassword() << ",";
+    writer << adminRecords[i].getFirstName() << ",";
+    writer << adminRecords[i].getLastName() << ",";
+    writer << adminRecords[i].getContactNumber() << ",";
+    writer << adminRecords[i].getAddress() << ",";
+    writer << adminRecords[i].getAdminRank() << endl;
+  }
+
+  for (int i = 0; i < students; i++) {
+    writer << studentRecords[i].getUsername() << ",";
+    writer << studentRecords[i].getPassword() << ",";
+    writer << studentRecords[i].getFirstName() << ",";
+    writer << studentRecords[i].getLastName() << ",";
+    writer << studentRecords[i].getContactNumber() << ",";
+    writer << studentRecords[i].getAddress() << ",";
+    writer << studentRecords[i].getProgram() << ",";
+    writer << studentRecords[i].getSemester() << ",";
+    writer << studentRecords[i].getRollNo() << ",";
+    writer << studentRecords[i].getStudentID() << ",";
+    writer << studentRecords[i].getSemesterGPA() << ",";
+
+    int noOfSubjects = studentRecords[i].getNoOfSubjects();
+    vector<Subject> subjects = studentRecords[i].getSubjects();
+
+    writer << noOfSubjects << ",";
+    for (int j = 0; j < noOfSubjects; j++) {
+      writer << subjects[j].code << ",";
+      writer << subjects[j].attendance << ",";
+      if (j == noOfSubjects - 1)
+        writer << subjects[j].gpa << endl;
+      else
+        writer << subjects[j].gpa << ",";
+    }
+  }
+
+  for (int i = 0; i < teachers; i++) {
+  }
+
+  writer.close();
+}
 
 vector<string> splitLine(string &line) {
   vector<string> result;
@@ -406,9 +559,13 @@ void loadData() {
       reader >> line;
       items = splitLine(line);
 
-      Admin tempAdmin;
-
-      adminRecords.push_back(tempAdmin);
+      adminRecords.push_back(Admin(items[0],
+                                   items[1],
+                                   items[2],
+                                   items[3],
+                                   items[4],
+                                   items[5],
+                                   bool(stoi(items[6]))));
     }
 
     // Load student data
@@ -416,19 +573,32 @@ void loadData() {
       reader >> line;
       items = splitLine(line);
 
-      Student tempStudent(items[0],
-                          items[1],
-                          items[2],
-                          items[3],
-                          stol(items[4]),
-                          items[5],
-                          items[6],
-                          stoi(items[7]),
-                          stoi(items[8]),
-                          items[9],
-                          stof(items[10]));
+      int noOfSubjects = stoi(items[11]);
+      vector<Subject> subjects;
 
-      studentRecords.push_back(tempStudent);
+      for (int j = 0; j < noOfSubjects; j++) {
+        Subject tempSubject;
+
+        tempSubject.code = items[12 + j];
+        tempSubject.attendance = stoi(items[13 + j]);
+        tempSubject.gpa = stof(items[14 + j]);
+
+        subjects.push_back(tempSubject);
+      }
+
+      studentRecords.push_back(Student(items[0],
+                                       items[1],
+                                       items[2],
+                                       items[3],
+                                       items[4],
+                                       items[5],
+                                       items[6],
+                                       stoi(items[7]),
+                                       stoi(items[8]),
+                                       items[9],
+                                       stof(items[10]),
+                                       noOfSubjects,
+                                       subjects));
     }
 
     // Load teacher data
@@ -436,11 +606,34 @@ void loadData() {
       reader >> line;
       items = splitLine(line);
 
-      Teacher tempTeacher;
-
-      teacherRecords.push_back(tempTeacher);
+      teacherRecords.push_back(Teacher(false));
     }
+
+    reader.close();
   } else {
+    adminRecords.push_back(Admin("Admin", "12345678", "-", "-", "-", "-", true));
+
+    vector<Subject> emptySubjects;
+    emptySubjects.push_back(Subject());
+
+    studentRecords.push_back(Student("Student", "12345678", "-", "-", "-", "-", "-", 0, 0, "-", 0, 1, emptySubjects));
+
+    saveData();
+    system("cls");
+    printWarning("Warning! data.csv was not found. A new file has been created with the following logins:\n\n");
+
+    setColor(11);
+    cout << left << setw(21) << "Username";
+    cout << "Password\n";
+    setColor(7);
+
+    cout << left << setw(21) << "Admin";
+    cout << "12345678\n";
+    cout << left << setw(21) << "Student";
+    cout << "12345678\n";
+
+    cout << endl;
+    system("pause");
   }
 }
 
@@ -466,7 +659,7 @@ bool userExists(string username) {
   int index;
   index = searchStudents(username);
 
-  if (index = -1)
+  if (index == -1)
     return false;
   else
     return true;
@@ -492,7 +685,7 @@ void login() {
         loggedIn = true;
         User::setCurrentUserType('A');
         User::setCurrentUserIndex(i);
-        printSuccess("Login Successful!");
+        printSuccess("Login Successful . . . ");
         Sleep(1000);
         break;
       }
@@ -503,7 +696,7 @@ void login() {
         loggedIn = true;
         User::setCurrentUserType('S');
         User::setCurrentUserIndex(i);
-        printSuccess("Login Successful!");
+        printSuccess("Login Successful . . . ");
         Sleep(1000);
         break;
       }
@@ -514,7 +707,7 @@ void login() {
         loggedIn = true;
         User::setCurrentUserType('T');
         User::setCurrentUserIndex(i);
-        printSuccess("Login Successful!");
+        printSuccess("Login Successful . . . ");
         Sleep(1000);
         break;
       }
@@ -523,7 +716,7 @@ void login() {
     if (loggedIn)
       break;
     else {
-      printError("Incorrect username/password");
+      printError("Incorrect username/password . . . ");
       Sleep(1000);
     }
   } while (true);
@@ -544,20 +737,25 @@ void teacherPanel() {}
 // ----- Main Function ----- //
 
 int main() {
+  system("cls");
   loadData();
-  login();
+  Student newStudent(true);
+  newStudent.inputData();
+  studentRecords.push_back(newStudent);
+  saveData();
+  // login();
 
-  switch (User::getCurrentUserType()) {
-  case 'A':
-    adminPanel();
-    break;
-  case 'S':
-    studentPanel();
-    break;
-  case 'T':
-    teacherPanel();
-    break;
-  }
+  // switch (User::getCurrentUserType()) {
+  // case 'A':
+  //   adminPanel();
+  //   break;
+  // case 'S':
+  //   studentPanel();
+  //   break;
+  // case 'T':
+  //   teacherPanel();
+  //   break;
+  // }
 
   cout << endl;
   system("pause");
