@@ -1,3 +1,4 @@
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -9,6 +10,7 @@ using namespace std;
 // ----- Function Declarations ----- //
 
 int searchStudents(string program, int semester, int rollNo);
+int searchTeachers(int id);
 bool userExists(string username);
 
 // ----- Aesthetic & Utility Functions ----- //
@@ -46,7 +48,7 @@ void printError(string text) {
   setColor(7);
 }
 
-// ----- Classes ----- //
+// ----- Classes & Structs ----- //
 
 class User {
 protected:
@@ -206,7 +208,7 @@ public:
 class Admin : public User {
 private:
   static int adminCount;
-  bool headAdmin;
+  bool superAdmin;
 
 public:
   Admin(bool incrementCount) : User(incrementCount) {
@@ -220,9 +222,9 @@ public:
         string lN,
         string cN,
         string add,
-        bool hA = false) : User(un, pw, fN, lN, cN, add) {
+        bool sA = false) : User(un, pw, fN, lN, cN, add) {
     ++adminCount;
-    headAdmin = hA;
+    superAdmin = sA;
   }
 
   // ----- Setters ----- //
@@ -230,22 +232,22 @@ public:
 
   // ----- Getters ----- //
   static int getAdminCount() { return adminCount; }
-  bool getAdminRank() { return headAdmin; }
+  bool getSuperAdminStatus() { return superAdmin; }
 
   // ----- Input Setters ----- //
-  void inputAdminRank() {
+  void inputSuperAdminStatus() {
     char input;
 
     do {
-      cout << "Set rank to head admin? (y/n): ";
+      cout << "Set status to super admin? (y/n): ";
       cin >> input;
       input = tolower(input);
 
       if (input == 'y') {
-        headAdmin = true;
+        superAdmin = true;
         break;
       } else if (input == 'n') {
-        headAdmin = false;
+        superAdmin = false;
         break;
       } else {
         printError("Invalid input!\n\n");
@@ -255,7 +257,7 @@ public:
 
   void inputData() {
     User::inputData();
-    inputAdminRank();
+    inputSuperAdminStatus();
   }
 };
 
@@ -312,6 +314,7 @@ public:
     subjects = sbj;
   }
 
+  // ----- Setters ----- //
   static void setStudentCount(int sC) { studentCount = sC; }
 
   // ----- Getters ----- //
@@ -324,9 +327,15 @@ public:
   float getSemesterGPA() {
     float sum = 0;
     for (int i = 0; i < noOfSubjects; i++) {
-      sum += subjects[i].gpa;
+      if (subjects[i].gpa == -1) {
+        semesterGPA = -1;
+        return semesterGPA;
+      } else {
+        sum += subjects[i].gpa;
+      }
     }
     semesterGPA = sum / noOfSubjects;
+    semesterGPA = ceil(semesterGPA * 100.0) / 100.0;
     return semesterGPA;
   }
 
@@ -354,7 +363,7 @@ public:
       } while (true);
 
       if (searchStudents(offeredPrograms[option - 1], semester, rollNo) != -1)
-        printError("Duplicate student record found!\n\n");
+        printError("A student record with similar data already exists\n\n");
       else
         break;
     } while (true);
@@ -375,7 +384,7 @@ public:
       } while (true);
 
       if (searchStudents(program, semester, rollNo) != -1)
-        printError("Duplicate student record found!\n\n");
+        printError("A student record with similar data already exists\n\n");
       else
         break;
     } while (true);
@@ -384,15 +393,19 @@ public:
   }
 
   void inputRollNo() {
+    int newRollNo;
+
     do {
       cout << "Input roll number: ";
-      cin >> rollNo;
-      if (searchStudents(program, semester, rollNo) != -1)
-        printError("Duplicate student record found!\n\n");
+      cin >> newRollNo;
+
+      if (searchStudents(program, semester, newRollNo) != -1)
+        printError("A student record with similar data already exists\n\n");
       else
         break;
     } while (true);
 
+    rollNo = newRollNo;
     createStudentID();
   }
 
@@ -434,6 +447,16 @@ public:
 class Teacher : public User {
 private:
   static int teacherCount;
+  string department;
+  int yearJoined;
+  int idNo;
+  string teacherID;
+
+  string departments[5] = {"SE", "CS", "DS", "AI", "GM"};
+
+  void createTeacherID() {
+    teacherID = department + "-" + to_string(yearJoined) + "-" + to_string(idNo);
+  }
 
 public:
   Teacher(bool incrementCount) : User(incrementCount) {
@@ -446,20 +469,89 @@ public:
           string fN,
           string lN,
           string cN,
-          string add) : User(un, pw, fN, lN, cN, add) {}
+          string add,
+          string d,
+          int yJ,
+          int idN,
+          string tID) : User(un, pw, fN, lN, cN, add) {
+    ++teacherCount;
+    department = d;
+    yearJoined = yJ;
+    idNo = idN;
+    teacherID = tID;
+  }
 
+  // ----- Setters ----- //
   static void setTeacherCount(int aC) { teacherCount = aC; }
 
   // ----- Getters ----- //
   static int getTeacherCount() { return teacherCount; }
+  string getDepartment() { return department; }
+  int getYearJoined() { return yearJoined; }
+  int getIDNo() { return idNo; }
+  string getTeacherID() { return teacherID; }
 
   // ----- Input Setters ----- //
+  void inputDepartment() {
+    cout << endl;
+    for (int i = 0; i < 5; i++) {
+      cout << i + 1 << ": " << departments[i] << endl;
+    }
+    cout << endl;
+
+    int option;
+    do {
+      cout << "Choose a department: ";
+      cin >> option;
+
+      if (option < 1 || option > 5)
+        printError("Invalid option!\n\n");
+      else
+        break;
+    } while (true);
+
+    department = departments[option - 1];
+    createTeacherID();
+  }
+
+  void inputYearJoined() {
+    int minYear = 1998, maxYear = 2023;
+
+    do {
+      cout << "Enter joining year: ";
+      cin >> yearJoined;
+
+      if (yearJoined < minYear || yearJoined > maxYear)
+        printError("Year should be between " + to_string(minYear) + " & " + to_string(maxYear));
+      else
+        break;
+    } while (true);
+
+    createTeacherID();
+  }
+
+  void inputIDNo() {
+    int newID;
+
+    do {
+      cout << "Enter ID number: ";
+      cin >> newID;
+
+      if (searchTeachers(newID) != -1)
+        printError("A teacher record with this ID number already exists\n\n");
+      else
+        break;
+    } while (true);
+
+    idNo = newID;
+    createTeacherID();
+  }
 };
 
 // ----- Initializing Static Variables ----- //
 
 int User::userCount = 0;
-char User::currentUserType = 'G'; // 'G' = Guest
+char User::currentUserType = ' ';
 int User::currentUserIndex = -1;
 
 int Admin::adminCount = 0;
@@ -493,7 +585,7 @@ void saveData() {
     writer << adminRecords[i].getLastName() << ",";
     writer << adminRecords[i].getContactNumber() << ",";
     writer << adminRecords[i].getAddress() << ",";
-    writer << adminRecords[i].getAdminRank() << endl;
+    writer << adminRecords[i].getSuperAdminStatus() << endl;
   }
 
   for (int i = 0; i < students; i++) {
@@ -524,6 +616,16 @@ void saveData() {
   }
 
   for (int i = 0; i < teachers; i++) {
+    writer << teacherRecords[i].getUsername() << ",";
+    writer << teacherRecords[i].getPassword() << ",";
+    writer << teacherRecords[i].getFirstName() << ",";
+    writer << teacherRecords[i].getLastName() << ",";
+    writer << teacherRecords[i].getContactNumber() << ",";
+    writer << teacherRecords[i].getAddress() << ",";
+    writer << teacherRecords[i].getDepartment() << ",";
+    writer << teacherRecords[i].getYearJoined() << ",";
+    writer << teacherRecords[i].getIDNo() << ",";
+    writer << teacherRecords[i].getTeacherID() << endl;
   }
 
   writer.close();
@@ -606,17 +708,27 @@ void loadData() {
       reader >> line;
       items = splitLine(line);
 
-      teacherRecords.push_back(Teacher(false));
+      teacherRecords.push_back(Teacher(items[0],
+                                       items[1],
+                                       items[2],
+                                       items[3],
+                                       items[4],
+                                       items[5],
+                                       items[6],
+                                       stoi(items[7]),
+                                       stoi(items[8]),
+                                       items[9]));
     }
 
     reader.close();
   } else {
     adminRecords.push_back(Admin("Admin", "12345678", "-", "-", "-", "-", true));
 
-    vector<Subject> emptySubjects;
-    emptySubjects.push_back(Subject());
+    vector<Subject> emptySubject;
+    emptySubject.push_back(Subject());
+    studentRecords.push_back(Student("Student", "12345678", "-", "-", "-", "-", "-", 0, 0, "-", -1, 1, emptySubject));
 
-    studentRecords.push_back(Student("Student", "12345678", "-", "-", "-", "-", "-", 0, 0, "-", 0, 1, emptySubjects));
+    teacherRecords.push_back(Teacher("Teacher", "12345678", "-", "-", "-", "-", "-", 0, 0, "-"));
 
     saveData();
     system("cls");
@@ -631,6 +743,8 @@ void loadData() {
     cout << "12345678\n";
     cout << left << setw(21) << "Student";
     cout << "12345678\n";
+    cout << left << setw(21) << "Teacher";
+    cout << "12345678\n";
 
     cout << endl;
     system("pause");
@@ -639,9 +753,9 @@ void loadData() {
 
 // ----- Search Functions ----- //
 
-int searchStudents(string program, int semester, int rollNo) {
-  for (int i = 0; i < studentRecords.size(); i++) {
-    if (studentRecords[i].getProgram() == program && studentRecords[i].getSemester() == semester && studentRecords[i].getRollNo() == rollNo)
+int searchAdmins(string username) {
+  for (int i = 0; i < adminRecords.size(); i++) {
+    if (adminRecords[i].getUsername() == username)
       return i;
   }
   return -1;
@@ -655,9 +769,35 @@ int searchStudents(string username) {
   return -1;
 }
 
+int searchStudents(string program, int semester, int rollNo) {
+  for (int i = 0; i < studentRecords.size(); i++) {
+    if (studentRecords[i].getProgram() == program && studentRecords[i].getSemester() == semester && studentRecords[i].getRollNo() == rollNo)
+      return i;
+  }
+  return -1;
+}
+
+int searchTeachers(string username) {
+  for (int i = 0; i < teacherRecords.size(); i++) {
+    if (teacherRecords[i].getUsername() == username)
+      return i;
+  }
+  return -1;
+}
+
+int searchTeachers(int id) {
+  for (int i = 0; i < teacherRecords.size(); i++) {
+    if (teacherRecords[i].getIDNo() == id)
+      return i;
+  }
+  return -1;
+}
+
 bool userExists(string username) {
   int index;
+  index = searchAdmins(username);
   index = searchStudents(username);
+  index = searchTeachers(username);
 
   if (index == -1)
     return false;
@@ -722,40 +862,37 @@ void login() {
   } while (true);
 }
 
-// ----- Main Function ----- //
+// ----- Admin Functions ----- //
 
 void adminPanel() {}
 
-// ----- Main Function ----- //
+// ----- Student Functions ----- //
 
 void studentPanel() {}
 
-// ----- Main Function ----- //
+// ----- Teacher Functions ----- //
 
 void teacherPanel() {}
 
 // ----- Main Function ----- //
 
 int main() {
-  system("cls");
   loadData();
-  Student newStudent(true);
-  newStudent.inputData();
-  studentRecords.push_back(newStudent);
-  saveData();
-  // login();
+  login();
 
-  // switch (User::getCurrentUserType()) {
-  // case 'A':
-  //   adminPanel();
-  //   break;
-  // case 'S':
-  //   studentPanel();
-  //   break;
-  // case 'T':
-  //   teacherPanel();
-  //   break;
-  // }
+  switch (User::getCurrentUserType()) {
+  case 'A':
+    adminPanel();
+    break;
+  case 'S':
+    studentPanel();
+    break;
+  case 'T':
+    teacherPanel();
+    break;
+  }
+
+  saveData();
 
   cout << endl;
   system("pause");
