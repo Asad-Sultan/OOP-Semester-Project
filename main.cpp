@@ -50,6 +50,9 @@ void printError(string text) {
 class User {
 protected:
   static int userCount;
+  static char currentUserType;
+  static int currentUserIndex;
+
   string username;
   string password;
   string firstName;
@@ -82,15 +85,42 @@ public:
 
   // ----- Setters ----- //
   static void setUserCount(int uC) { userCount = uC; }
-  // void setUsername(string un) { username = un; }
-  // void setPassword(string pw) { password = pw; }
-  // void setFirstName(string fN) { firstName = fN; }
-  // void setLastName(string lN) { lastName = lN; }
-  // void setContactNumber(string cN) { contactNo = cN; }
-  // void setAddress(string add) { address = add; }
+  static void setCurrentUserType(char cUT) { currentUserType = cUT; }
+  static void setCurrentUserIndex(int cUI) { currentUserIndex = cUI; }
+
+  void changePassword() {
+    string pwVerify, pwNew, pwConfirm;
+
+    do {
+      cout << "Enter current password: ";
+      cin >> pwVerify;
+
+      if (pwVerify == password)
+        break;
+      else
+        printError("Incorrect password!\n\n");
+    } while (true);
+
+    do {
+      cout << "Enter new password: ";
+      cin >> pwNew;
+      cout << "Confirm password: ";
+      cin >> pwConfirm;
+
+      if (pwNew == pwConfirm)
+        break;
+      else
+        printError("Passwords do no match\n\n");
+    } while (true);
+
+    password = pwNew;
+  }
 
   // ----- Getters ----- //
   static int getUserCount() { return userCount; }
+  static char getCurrentUserType() { return currentUserType; }
+  static int getCurrentUserIndex() { return currentUserIndex; }
+
   string getUsername() { return username; }
   string getPassword() { return password; }
   string getFirstName() { return firstName; }
@@ -169,10 +199,23 @@ public:
 
 class Admin : public User {
 private:
-public:
-};
+  static int adminCount;
 
-// ----- Student Class & Related Structs ----- //
+public:
+  Admin(string un = "",
+        string pw = "",
+        string fN = "",
+        string lN = "",
+        long int cN = 0,
+        string add = "") : User(un, pw, fN, lN, cN, add) {}
+
+  static void setAdminCount(int aC) { adminCount = aC; }
+
+  // ----- Getters ----- //
+  static int getAdminCount() { return adminCount; }
+
+  // ----- Input Setters ----- //
+};
 
 struct Subject {
   string name;
@@ -192,7 +235,7 @@ private:
   string offeredPrograms[5] = {"BSSE", "BSCS", "BSDS", "BSAI", "BSGM"};
 
   void createStudentID() {
-    studentID = program + "-" + to_string(semester) + "-" + to_string(rollNo);
+    studentID = program + "-SM" + to_string(semester) + "-" + to_string(rollNo);
   }
 
 public:
@@ -215,11 +258,7 @@ public:
     semesterGPA = sGPA;
   }
 
-  // ----- Setters ----- //
   static void setStudentCount(int sC) { studentCount = sC; }
-  // void setProgram(string p) { program = p; }
-  // void setSemester(int s) { semester = s; }
-  // void setRollNo(int rN) { rollNo = rN; }
 
   // ----- Getters ----- //
   static int getStudentCount() { return studentCount; }
@@ -299,14 +338,41 @@ public:
   }
 };
 
+class Teacher : public User {
+private:
+  static int teacherCount;
+
+public:
+  Teacher(string un = "",
+          string pw = "",
+          string fN = "",
+          string lN = "",
+          long int cN = 0,
+          string add = "") : User(un, pw, fN, lN, cN, add) {}
+
+  static void setTeacherCount(int aC) { teacherCount = aC; }
+
+  // ----- Getters ----- //
+  static int getTeacherCount() { return teacherCount; }
+
+  // ----- Input Setters ----- //
+};
+
 // ----- Initializing Static Variables ----- //
 
 int User::userCount = 0;
+char User::currentUserType = 'G'; // 'G' = Guest
+int User::currentUserIndex = -1;
+
+int Admin::adminCount = 0;
 int Student::studentCount = 0;
+int Teacher::teacherCount = 0;
 
 // ----- Data Vectors ----- //
 
+vector<Admin> adminRecords;
 vector<Student> studentRecords;
+vector<Teacher> teacherRecords;
 
 // ----- Data Handling ----- //
 
@@ -322,20 +388,31 @@ vector<string> splitLine(string &line) {
   return result;
 }
 
-bool loadData() {
+void loadData() {
   fstream reader("data.csv", ios::in);
 
   if (reader.is_open()) {
-    int userCount, studentCount;
-    reader >> userCount;
-    reader >> studentCount;
+    int users, admins, students, teachers;
+    reader >> users;
+    reader >> admins;
+    reader >> students;
+    reader >> teachers;
 
     string line;
     vector<string> items;
 
-    // Load Admins
+    // Load admin data
+    for (int i = 0; i < admins; i++) {
+      reader >> line;
+      items = splitLine(line);
 
-    for (int i = 0; i < studentCount; i++) {
+      Admin tempAdmin;
+
+      adminRecords.push_back(tempAdmin);
+    }
+
+    // Load student data
+    for (int i = 0; i < students; i++) {
       reader >> line;
       items = splitLine(line);
 
@@ -353,8 +430,17 @@ bool loadData() {
 
       studentRecords.push_back(tempStudent);
     }
+
+    // Load teacher data
+    for (int i = 0; i < teachers; i++) {
+      reader >> line;
+      items = splitLine(line);
+
+      Teacher tempTeacher;
+
+      teacherRecords.push_back(tempTeacher);
+    }
   } else {
-    return false;
   }
 }
 
@@ -386,10 +472,92 @@ bool userExists(string username) {
     return true;
 }
 
+// ----- Login Function ----- //
+
+void login() {
+  string username, password;
+  bool loggedIn = false;
+
+  do {
+    system("cls");
+    printHeader("University Management System");
+    cout << "Username: ";
+    cin >> username;
+    cout << "Password: ";
+    cin >> password;
+    cout << endl;
+
+    for (int i = 0; i < adminRecords.size(); i++) {
+      if (adminRecords[i].getUsername() == username && adminRecords[i].getPassword() == password) {
+        loggedIn = true;
+        User::setCurrentUserType('A');
+        User::setCurrentUserIndex(i);
+        printSuccess("Login Successful!");
+        Sleep(1000);
+        break;
+      }
+    }
+
+    for (int i = 0; i < studentRecords.size(); i++) {
+      if (studentRecords[i].getUsername() == username && studentRecords[i].getPassword() == password) {
+        loggedIn = true;
+        User::setCurrentUserType('S');
+        User::setCurrentUserIndex(i);
+        printSuccess("Login Successful!");
+        Sleep(1000);
+        break;
+      }
+    }
+
+    for (int i = 0; i < teacherRecords.size(); i++) {
+      if (teacherRecords[i].getUsername() == username && teacherRecords[i].getPassword() == password) {
+        loggedIn = true;
+        User::setCurrentUserType('T');
+        User::setCurrentUserIndex(i);
+        printSuccess("Login Successful!");
+        Sleep(1000);
+        break;
+      }
+    }
+
+    if (loggedIn)
+      break;
+    else {
+      printError("Incorrect username/password");
+      Sleep(1000);
+    }
+  } while (true);
+}
+
+// ----- Main Function ----- //
+
+void adminPanel() {}
+
+// ----- Main Function ----- //
+
+void studentPanel() {}
+
+// ----- Main Function ----- //
+
+void teacherPanel() {}
+
 // ----- Main Function ----- //
 
 int main() {
-  system("cls");
+  loadData();
+  login();
+
+  switch (User::getCurrentUserType()) {
+  case 'A':
+    adminPanel();
+    break;
+  case 'S':
+    studentPanel();
+    break;
+  case 'T':
+    teacherPanel();
+    break;
+  }
 
   cout << endl;
   system("pause");
