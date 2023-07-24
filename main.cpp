@@ -25,7 +25,23 @@ void printHeader(string text) {
   setColor(9);
   cout << "# ----- ";
   setColor(7);
-  cout << text;
+
+  for (int i = 0; i < text.length(); i++) {
+    if (text[i] == '>') {
+      setColor(9);
+      cout << text[i];
+      setColor(7);
+    } else if (text[i] == '[') {
+      setColor(10);
+      cout << text[i];
+    } else if (text[i] == ']') {
+      cout << text[i];
+      setColor(7);
+    } else {
+      cout << text[i];
+    }
+  }
+
   setColor(9);
   cout << " ----- #\n\n";
   setColor(7);
@@ -144,17 +160,27 @@ public:
   // ----- Input Setters ----- //
   void inputUsername() {
     string newUsername;
+    bool goodUsernameLength, validUsername;
 
     do {
       do {
         cout << "Enter username: ";
         cin >> newUsername;
 
-        if (lengthCheck(newUsername, 4, 20))
-          break;
-        else
-          printWarning("Username should be between 4 & 20 characters\n\n");
-      } while (true);
+        goodUsernameLength = lengthCheck(newUsername, 4, 20);
+
+        validUsername = true;
+        for (int i = 0; i < newUsername.length(); i++)
+          if ((newUsername[i] < 'A' || newUsername[i] > 'Z') && (newUsername[i] < 'a' || newUsername[i] > 'z') && (newUsername[i] < '0' || newUsername[i] > '9'))
+            validUsername = false;
+
+        if (!goodUsernameLength)
+          printError("Username should be between 4 & 20 characters\n");
+        if (!validUsername)
+          printError("Only letters and numbers are allowed in the username\n");
+        if (!goodUsernameLength || !validUsername)
+          cout << endl;
+      } while (!goodUsernameLength || !validUsername);
 
       if (newUsername == username)
         break;
@@ -658,7 +684,7 @@ void sortData() {
   sort(studentRecords.begin(), studentRecords.end());
   sort(teacherRecords.begin(), teacherRecords.end());
 
-  // Update current user index in case data sort changes the object's palce in the vector
+  // Update current user index in case data sort changes the object's place in the vector
   switch (User::getCurrentUserType()) {
   case 'A':
     User::setCurrentUserIndex(searchAdmins(User::getCurrentUserUsername()));
@@ -924,36 +950,205 @@ void login() {
 
 // ----- Admin Functions ----- //
 
-void adminPanel() {}
+// Admin View Functions
+void admin_viewAdmins() {
+  system("cls");
+  printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View Admins");
+
+  setColor(14);
+  cout << left << setw(21) << "Username";
+  cout << left << setw(21) << "Full Name";
+  cout << left << setw(15) << "Super Admin";
+  cout << left << setw(21) << "Contact No";
+  cout << "Address\n";
+  setColor(7);
+
+  for (int i = 0; i < adminRecords.size(); i++) {
+    cout << left << setw(21) << adminRecords[i].getUsername();
+    cout << left << setw(21) << adminRecords[i].getFirstName() + " " + adminRecords[i].getLastName();
+
+    if (adminRecords[i].getSuperAdminStatus())
+      cout << left << setw(15) << "Yes";
+    else
+      cout << left << setw(15) << "No";
+
+    cout << left << setw(21) << adminRecords[i].getContactNumber();
+    cout << adminRecords[i].getAddress() << endl;
+  }
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_viewStudents() {
+  system("cls");
+  printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View Students");
+
+  setColor(14);
+  cout << left << setw(21) << "Username";
+  cout << left << setw(21) << "Full Name";
+  cout << left << setw(17) << "Student ID";
+  cout << left << setw(11) << "SGPA";
+  cout << left << setw(11) << "Subjects";
+  cout << left << setw(21) << "Contact No";
+  cout << "Address\n";
+  setColor(7);
+
+  for (int i = 0; i < studentRecords.size(); i++) {
+    cout << left << setw(21) << studentRecords[i].getUsername();
+    cout << left << setw(21) << studentRecords[i].getFirstName() + " " + studentRecords[i].getLastName();
+    cout << left << setw(17) << studentRecords[i].getStudentID();
+
+    if (studentRecords[i].getSemesterGPA() == -1)
+      cout << left << setw(11) << "NA";
+    else
+      cout << left << setw(11) << studentRecords[i].getSemesterGPA();
+
+    cout << left << setw(11) << studentRecords[i].getNoOfSubjects();
+    cout << left << setw(21) << studentRecords[i].getContactNumber();
+    cout << studentRecords[i].getAddress() << endl;
+  }
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_viewTeachers() {
+  system("cls");
+  printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View Teachers");
+
+  setColor(14);
+  cout << left << setw(21) << "Username";
+  cout << left << setw(21) << "Full Name";
+  cout << left << setw(17) << "Teacher ID";
+  cout << left << setw(21) << "Contact No";
+  cout << "Address\n";
+  setColor(7);
+
+  for (int i = 0; i < teacherRecords.size(); i++) {
+    cout << left << setw(21) << teacherRecords[i].getUsername();
+    cout << left << setw(21) << teacherRecords[i].getFirstName() + " " + studentRecords[i].getLastName();
+    cout << left << setw(17) << teacherRecords[i].getTeacherID();
+    cout << left << setw(21) << teacherRecords[i].getContactNumber();
+    cout << teacherRecords[i].getAddress() << endl;
+  }
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_view() {
+  int option;
+
+  do {
+    system("cls");
+    printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View");
+
+    cout << "1: Admins\n";
+    cout << "2: Students\n";
+    cout << "3: Teacher\n\n";
+    cout << "0: Go Back\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      admin_viewAdmins();
+      break;
+
+    case 2:
+      admin_viewStudents();
+      break;
+
+    case 3:
+      admin_viewTeachers();
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
+}
+
+// Admin Panel
+void admin_panel() {
+  int option;
+
+  do {
+    system("cls");
+    printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "]");
+
+    cout << "1: View\n";
+    cout << "2: Create\n";
+    cout << "3: Edit\n";
+    cout << "4: Delete\n\n";
+    cout << "5: Change Account Info\n";
+    cout << "0: Exit UMS\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      admin_view();
+      break;
+
+    case 2:
+      /* code */
+      break;
+
+    case 3:
+      /* code */
+      break;
+
+    case 4:
+      /* code */
+      break;
+
+    case 5:
+      /* code */
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
+}
 
 // ----- Student Functions ----- //
 
-void studentPanel() {}
+void student_panel() {}
 
 // ----- Teacher Functions ----- //
 
-void teacherPanel() {}
+void teacher_panel() {}
 
 // ----- Main Function ----- //
 
 int main() {
   loadData();
-  saveData();
+  login();
 
-  // login();
-
-  // switch (User::getCurrentUserType()) {
-  // case 'A':
-  //   adminPanel();
-  //   break;
-  // case 'S':
-  //   studentPanel();
-  //   break;
-  // case 'T':
-  //   teacherPanel();
-  //   break;
-  // }
-
-  cout << endl;
-  system("pause");
+  switch (User::getCurrentUserType()) {
+  case 'A':
+    admin_panel();
+    break;
+  case 'S':
+    student_panel();
+    break;
+  case 'T':
+    teacher_panel();
+    break;
+  }
 }
