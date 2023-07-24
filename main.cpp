@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -55,6 +56,7 @@ protected:
   static int userCount;
   static char currentUserType;
   static int currentUserIndex;
+  static string currentUserUsername;
 
   string username;
   string password;
@@ -91,11 +93,7 @@ public:
     address = add;
   }
 
-  // ----- Setters & Other Functions ----- //
-  static void setUserCount(int uC) { userCount = uC; }
-  static void setCurrentUserType(char cUT) { currentUserType = cUT; }
-  static void setCurrentUserIndex(int cUI) { currentUserIndex = cUI; }
-
+  // ----- Change Password Function ----- //
   void changePassword() {
     string pwVerify, pwNew, pwConfirm;
 
@@ -124,10 +122,17 @@ public:
     password = pwNew;
   }
 
+  // ----- Setters ----- //
+  static void setUserCount(int uC) { userCount = uC; }
+  static void setCurrentUserType(char cUT) { currentUserType = cUT; }
+  static void setCurrentUserIndex(int cUI) { currentUserIndex = cUI; }
+  static void setCurrentUserUsername(string cUUN) { currentUserUsername = cUUN; }
+
   // ----- Getters ----- //
   static int getUserCount() { return userCount; }
   static char getCurrentUserType() { return currentUserType; }
   static int getCurrentUserIndex() { return currentUserIndex; }
+  static string getCurrentUserUsername() { return currentUserUsername; }
 
   string getUsername() { return username; }
   string getPassword() { return password; }
@@ -137,7 +142,6 @@ public:
   string getAddress() { return address; }
 
   // ----- Input Setters ----- //
-
   void inputUsername() {
     string newUsername;
 
@@ -227,7 +231,15 @@ public:
     superAdmin = sA;
   }
 
-  // ----- Setters ----- //
+  // ----- Operator Overload  ----- //
+  bool operator<(Admin &next) {
+    if (superAdmin > next.superAdmin)
+      return true;
+    if (superAdmin == next.superAdmin && username < next.username)
+      return true;
+  }
+
+  // ----- Setters  ----- //
   static void setAdminCount(int aC) { adminCount = aC; }
 
   // ----- Getters ----- //
@@ -279,7 +291,7 @@ private:
   int noOfSubjects;
   vector<Subject> subjects;
 
-  string offeredPrograms[5] = {"BSSE", "BSCS", "BSDS", "BSAI", "BSGM"};
+  string offeredPrograms[5] = {"BSAI", "BSCS", "BSDS", "BSGM", "BSSE"};
 
   void createStudentID() {
     studentID = program + "-SM" + to_string(semester) + "-" + to_string(rollNo);
@@ -312,6 +324,16 @@ public:
     semesterGPA = sGPA;
     noOfSubjects = nOS;
     subjects = sbj;
+  }
+
+  // ----- Operator Overload  ----- //
+  bool operator<(Student &next) {
+    if (program < next.program)
+      return true;
+    if (program == next.program && semester < next.semester)
+      return true;
+    if (program == next.program && semester == next.semester && rollNo < next.rollNo)
+      return true;
   }
 
   // ----- Setters ----- //
@@ -452,7 +474,7 @@ private:
   int idNo;
   string teacherID;
 
-  string departments[5] = {"SE", "CS", "DS", "AI", "GM"};
+  string departments[5] = {"AI", "CS", "DS", "GM", "SE"};
 
   void createTeacherID() {
     teacherID = department + "-" + to_string(yearJoined) + "-" + to_string(idNo);
@@ -479,6 +501,16 @@ public:
     yearJoined = yJ;
     idNo = idN;
     teacherID = tID;
+  }
+
+  // ----- Operator Overload  ----- //
+  bool operator<(Teacher &next) {
+    if (department < next.department)
+      return true;
+    if (department == next.department && yearJoined < next.yearJoined)
+      return true;
+    if (department == next.department && yearJoined == next.yearJoined && idNo < next.idNo)
+      return true;
   }
 
   // ----- Setters ----- //
@@ -553,6 +585,7 @@ public:
 int User::userCount = 0;
 char User::currentUserType = ' ';
 int User::currentUserIndex = -1;
+string User::currentUserUsername = "";
 
 int Admin::adminCount = 0;
 int Student::studentCount = 0;
@@ -564,9 +597,86 @@ vector<Admin> adminRecords;
 vector<Student> studentRecords;
 vector<Teacher> teacherRecords;
 
+// ----- Search Functions ----- //
+
+int searchAdmins(string username) {
+  for (int i = 0; i < adminRecords.size(); i++) {
+    if (adminRecords[i].getUsername() == username)
+      return i;
+  }
+  return -1;
+}
+
+int searchStudents(string username) {
+  for (int i = 0; i < studentRecords.size(); i++) {
+    if (studentRecords[i].getUsername() == username)
+      return i;
+  }
+  return -1;
+}
+
+int searchStudents(string program, int semester, int rollNo) {
+  for (int i = 0; i < studentRecords.size(); i++) {
+    if (studentRecords[i].getProgram() == program && studentRecords[i].getSemester() == semester && studentRecords[i].getRollNo() == rollNo)
+      return i;
+  }
+  return -1;
+}
+
+int searchTeachers(string username) {
+  for (int i = 0; i < teacherRecords.size(); i++) {
+    if (teacherRecords[i].getUsername() == username)
+      return i;
+  }
+  return -1;
+}
+
+int searchTeachers(int id) {
+  for (int i = 0; i < teacherRecords.size(); i++) {
+    if (teacherRecords[i].getIDNo() == id)
+      return i;
+  }
+  return -1;
+}
+
+bool userExists(string username) {
+  int index;
+  index = searchAdmins(username);
+  index = searchStudents(username);
+  index = searchTeachers(username);
+
+  if (index == -1)
+    return false;
+  else
+    return true;
+}
+
+// ----- Data Sorting ----- //
+
+void sortData() {
+  sort(adminRecords.begin(), adminRecords.end());
+  sort(studentRecords.begin(), studentRecords.end());
+  sort(teacherRecords.begin(), teacherRecords.end());
+
+  // Update current user index in case data sort changes the object's palce in the vector
+  switch (User::getCurrentUserType()) {
+  case 'A':
+    User::setCurrentUserIndex(searchAdmins(User::getCurrentUserUsername()));
+    break;
+  case 'S':
+    User::setCurrentUserIndex(searchStudents(User::getCurrentUserUsername()));
+    break;
+  case 'T':
+    User::setCurrentUserIndex(searchTeachers(User::getCurrentUserUsername()));
+    break;
+  }
+}
+
 // ----- Data Handling ----- //
 
 void saveData() {
+  sortData();
+
   fstream writer("data.csv", ios::out);
   int users = User::getUserCount();
   int admins = Admin::getAdminCount();
@@ -631,6 +741,7 @@ void saveData() {
   writer.close();
 }
 
+// Function to split csv lines into values using vector & sstream
 vector<string> splitLine(string &line) {
   vector<string> result;
   stringstream lineStream(line);
@@ -751,60 +862,6 @@ void loadData() {
   }
 }
 
-// ----- Search Functions ----- //
-
-int searchAdmins(string username) {
-  for (int i = 0; i < adminRecords.size(); i++) {
-    if (adminRecords[i].getUsername() == username)
-      return i;
-  }
-  return -1;
-}
-
-int searchStudents(string username) {
-  for (int i = 0; i < studentRecords.size(); i++) {
-    if (studentRecords[i].getUsername() == username)
-      return i;
-  }
-  return -1;
-}
-
-int searchStudents(string program, int semester, int rollNo) {
-  for (int i = 0; i < studentRecords.size(); i++) {
-    if (studentRecords[i].getProgram() == program && studentRecords[i].getSemester() == semester && studentRecords[i].getRollNo() == rollNo)
-      return i;
-  }
-  return -1;
-}
-
-int searchTeachers(string username) {
-  for (int i = 0; i < teacherRecords.size(); i++) {
-    if (teacherRecords[i].getUsername() == username)
-      return i;
-  }
-  return -1;
-}
-
-int searchTeachers(int id) {
-  for (int i = 0; i < teacherRecords.size(); i++) {
-    if (teacherRecords[i].getIDNo() == id)
-      return i;
-  }
-  return -1;
-}
-
-bool userExists(string username) {
-  int index;
-  index = searchAdmins(username);
-  index = searchStudents(username);
-  index = searchTeachers(username);
-
-  if (index == -1)
-    return false;
-  else
-    return true;
-}
-
 // ----- Login Function ----- //
 
 void login() {
@@ -825,6 +882,7 @@ void login() {
         loggedIn = true;
         User::setCurrentUserType('A');
         User::setCurrentUserIndex(i);
+        User::setCurrentUserUsername(username);
         printSuccess("Login Successful . . . ");
         Sleep(1000);
         break;
@@ -836,6 +894,7 @@ void login() {
         loggedIn = true;
         User::setCurrentUserType('S');
         User::setCurrentUserIndex(i);
+        User::setCurrentUserUsername(username);
         printSuccess("Login Successful . . . ");
         Sleep(1000);
         break;
@@ -847,6 +906,7 @@ void login() {
         loggedIn = true;
         User::setCurrentUserType('T');
         User::setCurrentUserIndex(i);
+        User::setCurrentUserUsername(username);
         printSuccess("Login Successful . . . ");
         Sleep(1000);
         break;
@@ -878,21 +938,21 @@ void teacherPanel() {}
 
 int main() {
   loadData();
-  login();
-
-  switch (User::getCurrentUserType()) {
-  case 'A':
-    adminPanel();
-    break;
-  case 'S':
-    studentPanel();
-    break;
-  case 'T':
-    teacherPanel();
-    break;
-  }
-
   saveData();
+
+  // login();
+
+  // switch (User::getCurrentUserType()) {
+  // case 'A':
+  //   adminPanel();
+  //   break;
+  // case 'S':
+  //   studentPanel();
+  //   break;
+  // case 'T':
+  //   teacherPanel();
+  //   break;
+  // }
 
   cout << endl;
   system("pause");
