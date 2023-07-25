@@ -1039,6 +1039,9 @@ void admin_viewAdmins() {
     cout << adminRecords[i].getCity() << endl;
   }
 
+  printColoredLine(14, "\nTotal Admins: ");
+  cout << Admin::getAdminCount() << endl;
+
   cout << endl;
   system("pause");
 }
@@ -1073,6 +1076,9 @@ void admin_viewStudents() {
     cout << studentRecords[i].getCity() << endl;
   }
 
+  printColoredLine(14, "\nTotal Students: ");
+  cout << Student::getStudentCount() << endl;
+
   cout << endl;
   system("pause");
 }
@@ -1090,11 +1096,14 @@ void admin_viewTeachers() {
 
   for (int i = 0; i < teacherRecords.size(); i++) {
     cout << left << setw(23) << teacherRecords[i].getUsername();
-    cout << left << setw(23) << teacherRecords[i].getFirstName() + " " + studentRecords[i].getLastName();
+    cout << left << setw(23) << teacherRecords[i].getFirstName() + " " + teacherRecords[i].getLastName();
     cout << left << setw(14) << teacherRecords[i].getTeacherID();
     cout << left << setw(18) << teacherRecords[i].getContactNumber();
     cout << teacherRecords[i].getCity() << endl;
   }
+
+  printColoredLine(14, "\nTotal Teachers: ");
+  cout << Teacher::getTeacherCount() << endl;
 
   cout << endl;
   system("pause");
@@ -1229,7 +1238,7 @@ void admin_editAdmin() {
     if (index != -1)
       break;
     else {
-      printError("\nAdmin not found . . . ");
+      printError("Record not found . . . ");
       Sleep(1000);
     }
   } while (true);
@@ -1346,7 +1355,7 @@ void admin_editStudent() {
     if (index != -1)
       break;
     else {
-      printError("\nStudent not found . . . ");
+      printError("Record not found . . . ");
       Sleep(1000);
     }
   } while (true);
@@ -1486,7 +1495,7 @@ void admin_editTeacher() {
     if (index != -1)
       break;
     else {
-      printError("\nTeacher not found . . . ");
+      printError("Record not found . . . ");
       Sleep(1000);
     }
   } while (true);
@@ -1648,25 +1657,107 @@ void admin_edit() {
 }
 
 // Admin Delete Functions
-void admin_deleteAdmin() {
-  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Admin Record");
+bool confirmDelete() {
+  char input;
+  printWarning("\nThis action cannot be undone, are you sure you want to continue? (y/n): ");
+  cin >> input;
+  input = tolower(input);
+  if (input == 'y')
+    return true;
+  else
+    return false;
+}
 
-  cout << endl;
-  system("pause");
+void admin_deleteAdmin() {
+  string userToDelete;
+  int index;
+
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Admin Record");
+    cout << "Enter username: ";
+    cin >> userToDelete;
+    index = searchAdmins(userToDelete);
+
+    if (index != -1) {
+      if (adminRecords[index].getUsername() == User::getActiveUserUsername()) {
+        printWarning("You are not allowed to delete your own record . . . ");
+        Sleep(1500);
+      } else {
+        break;
+      }
+    } else {
+      printError("Record not found . . . ");
+      Sleep(1000);
+    }
+  } while (true);
+
+  if (confirmDelete()) {
+    adminRecords.erase(adminRecords.begin() + index);
+    User::setUserCount(User::getUserCount() - 1);
+    Admin::setAdminCount(Admin::getAdminCount() - 1);
+    saveData();
+
+    printSuccess("\nAdmin record deleted successfully!\n\n");
+    system("pause");
+  }
 }
 
 void admin_deleteStudent() {
-  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Student Record");
+  string userToDelete;
+  int index;
 
-  cout << endl;
-  system("pause");
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Student Record");
+    cout << "Enter username: ";
+    cin >> userToDelete;
+    index = searchStudents(userToDelete);
+
+    if (index != -1) {
+      break;
+    } else {
+      printError("Record not found . . . ");
+      Sleep(1000);
+    }
+  } while (true);
+
+  if (confirmDelete()) {
+    studentRecords.erase(studentRecords.begin() + index);
+    User::setUserCount(User::getUserCount() - 1);
+    Student::setStudentCount(Student::getStudentCount() - 1);
+    saveData();
+
+    printSuccess("\nStudent record deleted successfully!\n\n");
+    system("pause");
+  }
 }
 
 void admin_deleteTeacher() {
-  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Teacher Record");
+  string userToDelete;
+  int index;
 
-  cout << endl;
-  system("pause");
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Teacher Record");
+    cout << "Enter username: ";
+    cin >> userToDelete;
+    index = searchTeachers(userToDelete);
+
+    if (index != -1) {
+      break;
+    } else {
+      printError("Record not found . . . ");
+      Sleep(1000);
+    }
+  } while (true);
+
+  if (confirmDelete()) {
+    teacherRecords.erase(teacherRecords.begin() + index);
+    User::setUserCount(User::getUserCount() - 1);
+    Teacher::setTeacherCount(Teacher::getTeacherCount() - 1);
+    saveData();
+
+    printSuccess("\nTeacher record deleted successfully!\n\n");
+    system("pause");
+  }
 }
 
 void admin_delete() {
@@ -1748,11 +1839,17 @@ void admin_panel() {
       break;
 
     case 5:
-      /* code */
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View Account Info");
+      adminRecords[User::getActiveUserIndex()].printInfo();
+      cout << endl;
+      system("pause");
       break;
 
     case 6:
-      /* code */
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Account Password");
+      adminRecords[User::getActiveUserIndex()].changePassword();
+      printSuccess("\nAccount password changed successfully!\n\n");
+      system("pause");
       break;
 
     case 0:
