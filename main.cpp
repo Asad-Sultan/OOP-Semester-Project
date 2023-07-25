@@ -418,6 +418,9 @@ public:
 
   // ----- Setters ----- //
   static void setStudentCount(int sC) { studentCount = sC; }
+  void setSubjects(vector<Subject> &updatedSubjects) {
+    subjects = updatedSubjects;
+  }
 
   // ----- Getters ----- //
   static int getStudentCount() { return studentCount; }
@@ -584,6 +587,39 @@ public:
     yearJoined = yJ;
     idNo = idN;
     teacherID = tID;
+  }
+
+  // ----- Attendance & GPA Marking Functions  ----- //
+  static int markAttendance() {
+    int attendance;
+
+    do {
+      cout << "Enter attendance percentage (0 to 100): ";
+      cin >> attendance;
+
+      if (attendance < 0 || attendance > 100)
+        printError("Invalid input\n\n");
+      else
+        break;
+    } while (true);
+
+    return attendance;
+  }
+
+  static float markGPA() {
+    float gpa;
+
+    do {
+      cout << "Enter gpa (0 to 4.00): ";
+      cin >> gpa;
+
+      if (gpa < 0 || gpa > 4.00)
+        printError("Invalid input\n\n");
+      else
+        break;
+    } while (true);
+
+    return gpa;
   }
 
   // ----- Operator Overload  ----- //
@@ -1815,7 +1851,7 @@ void admin_panel() {
     cout << "3: Edit\n";
     cout << "4: Delete\n\n";
     cout << "5: View Account Info\n";
-    cout << "6: Change Account Password\n";
+    cout << "6: Change Account Password\n\n";
     cout << "0: Exit UMS\n\n";
 
     cout << "Choose an option: ";
@@ -1848,6 +1884,7 @@ void admin_panel() {
     case 6:
       printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Account Password");
       adminRecords[User::getActiveUserIndex()].changePassword();
+      saveData();
       printSuccess("\nAccount password changed successfully!\n\n");
       system("pause");
       break;
@@ -1873,7 +1910,7 @@ void student_panel() {
 
     cout << "1: Academic Dashboard\n\n";
     cout << "2: View Account Info\n";
-    cout << "3: Change Account Password\n";
+    cout << "3: Change Account Password\n\n";
     cout << "0: Exit UMS\n\n";
 
     cout << "Choose an option: ";
@@ -1885,11 +1922,18 @@ void student_panel() {
       break;
 
     case 2:
-      /* code */
+      printHeader("UMS > Student Panel [" + User::getActiveUserUsername() + "] > View Account Info");
+      studentRecords[User::getActiveUserIndex()].printInfo();
+      cout << endl;
+      system("pause");
       break;
 
     case 3:
-      /* code */
+      printHeader("UMS > Student Panel [" + User::getActiveUserUsername() + "] > Change Account Password");
+      studentRecords[User::getActiveUserIndex()].changePassword();
+      saveData();
+      printSuccess("\nAccount password changed successfully!\n\n");
+      system("pause");
       break;
 
     case 0:
@@ -1905,16 +1949,107 @@ void student_panel() {
 
 // ----- Teacher Functions ----- //
 
+void teacher_mark() {
+  string studentID;
+  int index;
+
+  do {
+    printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "] > Marking");
+
+    cout << "Enter Student ID: ";
+    cin >> studentID;
+    studentID = toupperstr(studentID);
+
+    index = -1;
+    for (int i = 0; i < studentRecords.size(); i++)
+      if (studentRecords[i].getStudentID() == studentID)
+        index = i;
+
+    if (index == -1) {
+      printError("Student record not found . . . ");
+      Sleep(1000);
+    } else {
+      if (studentRecords[index].getProgram().substr(2, 3) != teacherRecords[User::getActiveUserIndex()].getDepartment()) {
+        printWarning("Student does not belong to your department . . . ");
+        Sleep(1500);
+      } else {
+        break;
+      }
+    }
+  } while (true);
+
+  int option;
+  vector<Subject> sbjcts = studentRecords[index].getSubjects();
+
+  do {
+    printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "] > [" + studentRecords[index].getStudentID() + "]");
+
+    for (int i = 0; i < sbjcts.size(); i++) {
+      cout << i + 1 << ": " << sbjcts[i].code << endl;
+    }
+    cout << "\n0: Cancel\n\n";
+
+    cout << "Choose a subject to mark: ";
+    cin >> option;
+
+    if (option == 0) {
+      break;
+    } else if (option <= sbjcts.size()) {
+      int choice;
+      do {
+        printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "] > [" + studentRecords[index].getStudentID() + "] > Marking " + sbjcts[option - 1].code);
+
+        cout << "1: Mark Attendance\n";
+        cout << "2: Mark GPA\n\n";
+        cout << "0: Cancel\n\n";
+
+        cout << "Choose an option: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+          printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "] > [" + studentRecords[index].getStudentID() + "] > Marking " + sbjcts[option - 1].code + " Attendance");
+          sbjcts[option - 1].attendance = Teacher::markAttendance();
+          studentRecords[index].setSubjects(sbjcts);
+          saveData();
+          printSuccess("\nAttendance marked successfully!\n\n");
+          system("pause");
+          break;
+
+        case 2:
+          printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "] > [" + studentRecords[index].getStudentID() + "] > Marking " + sbjcts[option - 1].code + " GPA");
+          sbjcts[option - 1].gpa = Teacher::markGPA();
+          studentRecords[index].setSubjects(sbjcts);
+          saveData();
+          printSuccess("\nGPA marked successfully!\n\n");
+          system("pause");
+          break;
+
+        case 0:
+          break;
+
+        default:
+          printError("Invalid option . . . ");
+          Sleep(1000);
+          break;
+        }
+      } while (choice != 0 && choice != 1 && choice != 2);
+    } else {
+      printError("Invalid option . . . ");
+      Sleep(1000);
+    }
+  } while (true);
+}
+
 void teacher_panel() {
   int option;
 
   do {
     printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "]");
 
-    cout << "1: Mark Attendance\n";
-    cout << "2: Mark GPA\n\n";
-    cout << "3: View Account Info\n";
-    cout << "4: Change Account Password\n";
+    cout << "1: Mark Attendance/GPA\n\n";
+    cout << "2: View Account Info\n";
+    cout << "3: Change Account Password\n\n";
     cout << "0: Exit UMS\n\n";
 
     cout << "Choose an option: ";
@@ -1922,19 +2057,22 @@ void teacher_panel() {
 
     switch (option) {
     case 1:
-      /* code */
+      teacher_mark();
       break;
 
     case 2:
-      /* code */
+      printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "] > View Account Info");
+      teacherRecords[User::getActiveUserIndex()].printInfo();
+      cout << endl;
+      system("pause");
       break;
 
     case 3:
-      /* code */
-      break;
-
-    case 4:
-      /* code */
+      printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "] > Change Account Password");
+      teacherRecords[User::getActiveUserIndex()].changePassword();
+      saveData();
+      printSuccess("\nAccount password changed successfully!\n\n");
+      system("pause");
       break;
 
     case 0:
