@@ -27,20 +27,24 @@ void setColor(int color) {
   SetConsoleTextAttribute(hConsole, color);
 }
 
+void printColoredLine(int color, string text) {
+  setColor(color);
+  cout << text;
+  setColor(7);
+}
+
 void printHeader(string text) {
   system("cls");
 
-  setColor(9);
-  cout << "# ----- ";
-  setColor(7);
+  printColoredLine(11, "# ----- ");
 
   for (int i = 0; i < text.length(); i++) {
     if (text[i] == '>') {
-      setColor(9);
+      setColor(11);
       cout << text[i];
       setColor(7);
     } else if (text[i] == '[') {
-      setColor(10);
+      setColor(3);
       cout << text[i];
     } else if (text[i] == ']') {
       cout << text[i];
@@ -50,27 +54,19 @@ void printHeader(string text) {
     }
   }
 
-  setColor(9);
-  cout << " ----- #\n\n";
-  setColor(7);
+  printColoredLine(11, " ----- #\n\n");
 }
 
 void printSuccess(string text) {
-  setColor(10);
-  cout << text;
-  setColor(7);
+  printColoredLine(10, text);
 }
 
 void printWarning(string text) {
-  setColor(14);
-  cout << text;
-  setColor(7);
+  printColoredLine(6, text);
 }
 
 void printError(string text) {
-  setColor(12);
-  cout << text;
-  setColor(7);
+  printColoredLine(4, text);
 }
 
 // ----- Classes & Structs ----- //
@@ -115,6 +111,18 @@ public:
     lastName = lN;
     contactNo = cN;
     city = ct;
+  }
+
+  // Print Info Function
+  void printInfo() {
+    cout << "Username: ";
+    printColoredLine(13, username + "\n");
+    cout << "Full Name: ";
+    printColoredLine(13, firstName + " " + lastName + "\n");
+    cout << "Contact Number: ";
+    printColoredLine(13, contactNo + "\n");
+    cout << "City: ";
+    printColoredLine(13, city + "\n");
   }
 
   // ----- Change Password Function ----- //
@@ -290,6 +298,16 @@ public:
       return true;
   }
 
+  // Print Info Function
+  void printInfo() {
+    User::printInfo();
+    cout << "Super Admin: ";
+    if (superAdmin)
+      printColoredLine(13, "Yes\n");
+    else
+      printColoredLine(13, "No\n");
+  }
+
   // ----- Setters  ----- //
   static void setAdminCount(int aC) { adminCount = aC; }
 
@@ -387,6 +405,17 @@ public:
       return true;
   }
 
+  // Print Info Function
+  void printInfo() {
+    User::printInfo();
+    cout << "Student ID: ";
+    printColoredLine(13, studentID + "\n");
+    for (int i = 0; i < subjects.size(); i++) {
+      cout << "Subject " << i + 1 << ": ";
+      printColoredLine(13, subjects[i].code + "\n");
+    }
+  }
+
   // ----- Setters ----- //
   static void setStudentCount(int sC) { studentCount = sC; }
 
@@ -395,7 +424,10 @@ public:
   string getProgram() { return program; }
   int getSemester() { return semester; }
   int getRollNo() { return rollNo; }
-  string getStudentID() { return studentID; }
+  string getStudentID() {
+    createStudentID();
+    return studentID;
+  }
 
   float getSemesterGPA() {
     float sum = 0;
@@ -434,34 +466,35 @@ public:
           break;
       } while (true);
 
-      if (searchStudents(offeredPrograms[option - 1], semester, rollNo) != -1)
+      if (searchStudents(offeredPrograms[option - 1], semester, rollNo) != -1 && offeredPrograms[option - 1] != program)
         printError("A student record with similar data already exists\n\n");
       else
         break;
     } while (true);
 
     program = offeredPrograms[option - 1];
-    createStudentID();
   }
 
   void inputSemester() {
+    int newSemester;
+
     do {
       do {
         cout << "Input semester: ";
-        cin >> semester;
-        if (semester < 1 || semester > 8)
+        cin >> newSemester;
+        if (newSemester < 1 || newSemester > 8)
           printError("Value should be between 1 & 8\n\n");
         else
           break;
       } while (true);
 
-      if (searchStudents(program, semester, rollNo) != -1)
+      if (searchStudents(program, newSemester, rollNo) != -1 && newSemester != semester)
         printError("A student record with similar data already exists\n\n");
       else
         break;
     } while (true);
 
-    createStudentID();
+    semester = newSemester;
   }
 
   void inputRollNo() {
@@ -471,14 +504,13 @@ public:
       cout << "Input roll number: ";
       cin >> newRollNo;
 
-      if (searchStudents(program, semester, newRollNo) != -1)
+      if (searchStudents(program, semester, newRollNo) != -1 && newRollNo != rollNo)
         printError("A student record with similar data already exists\n\n");
       else
         break;
     } while (true);
 
     rollNo = newRollNo;
-    createStudentID();
   }
 
   void inputSubjects() {
@@ -492,6 +524,7 @@ public:
         break;
     } while (true);
 
+    subjects.clear();
     cout << endl;
     for (int i = 0; i < noOfSubjects; i++) {
       Subject tempSubject;
@@ -563,6 +596,13 @@ public:
       return true;
   }
 
+  // Print Info Function
+  void printInfo() {
+    User::printInfo();
+    cout << "Teacher ID: ";
+    printColoredLine(13, teacherID + "\n");
+  }
+
   // ----- Setters ----- //
   static void setTeacherCount(int aC) { teacherCount = aC; }
 
@@ -571,7 +611,10 @@ public:
   string getDepartment() { return department; }
   int getYearJoined() { return yearJoined; }
   int getIDNo() { return idNo; }
-  string getTeacherID() { return teacherID; }
+  string getTeacherID() {
+    createTeacherID();
+    return teacherID;
+  }
 
   // ----- Input Setters ----- //
   void inputDepartment() {
@@ -592,7 +635,6 @@ public:
     } while (true);
 
     department = departments[option - 1];
-    createTeacherID();
   }
 
   void inputYearJoined() {
@@ -607,8 +649,6 @@ public:
       else
         break;
     } while (true);
-
-    createTeacherID();
   }
 
   void inputIDNo() {
@@ -618,14 +658,13 @@ public:
       cout << "Enter ID number: ";
       cin >> newID;
 
-      if (searchTeachers(newID) != -1)
+      if (searchTeachers(newID) != -1 && newID != idNo)
         printError("A teacher record with this ID number already exists\n\n");
       else
         break;
     } while (true);
 
     idNo = newID;
-    createTeacherID();
   }
 
   void inputData() {
@@ -1142,7 +1181,7 @@ void admin_create() {
     cout << "1: Admin\n";
     cout << "2: Student\n";
     cout << "3: Teacher\n\n";
-    cout << "0: Go Back\n\n";
+    cout << "0: Go back\n\n";
 
     cout << "Choose an option: ";
     cin >> option;
@@ -1178,24 +1217,391 @@ void admin_create() {
 
 // Admin Edit Functions
 void admin_editAdmin() {
-  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Admin Record");
+  string userToEdit;
+  int index;
 
-  cout << endl;
-  system("pause");
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Admin Record");
+    cout << "Enter username: ";
+    cin >> userToEdit;
+    index = searchAdmins(userToEdit);
+
+    if (index != -1)
+      break;
+    else {
+      printError("\nAdmin not found . . . ");
+      Sleep(1000);
+    }
+  } while (true);
+
+  int option;
+
+  do {
+    index = searchAdmins(userToEdit);
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Admin [" + adminRecords[index].getUsername() + "]");
+
+    cout << "1: Change Username\n";
+    cout << "2: Change Password\n";
+    cout << "3: Change First Name\n";
+    cout << "4: Change Last Name\n";
+    cout << "5: Change Contact Number\n";
+    cout << "6: Change City\n";
+    cout << "7: Change Super Admin Status\n\n";
+    cout << "8: View current account info\n";
+    cout << "0: Go back\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Admin [" + adminRecords[index].getUsername() + "]'s Username");
+      adminRecords[index].inputUsername();
+
+      if (User::getActiveUserUsername() == userToEdit)
+        User::setActiveUserUsername(adminRecords[index].getUsername());
+
+      userToEdit = adminRecords[index].getUsername();
+      saveData();
+      printSuccess("Username changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 2:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Admin [" + adminRecords[index].getUsername() + "]'s Password");
+      adminRecords[index].inputPassword();
+      saveData();
+      printSuccess("Password changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 3:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Admin [" + adminRecords[index].getUsername() + "]'s First Name");
+      adminRecords[index].inputFirstName();
+      saveData();
+      printSuccess("First Name changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 4:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Admin [" + adminRecords[index].getUsername() + "]'s Last Name");
+      adminRecords[index].inputLastName();
+      saveData();
+      printSuccess("Last Name changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 5:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Admin [" + adminRecords[index].getUsername() + "]'s Contact Number");
+      adminRecords[index].inputContactNumber();
+      saveData();
+      printSuccess("Contact Number changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 6:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Admin [" + adminRecords[index].getUsername() + "]'s City");
+      adminRecords[index].inputCity();
+      saveData();
+      printSuccess("City changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 7:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Admin [" + adminRecords[index].getUsername() + "]'s Super Admin Status");
+      adminRecords[index].inputSuperAdminStatus();
+      saveData();
+      printSuccess("Super Admin Status changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 8:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View Admin [" + adminRecords[index].getUsername() + "]'s Account Info");
+      adminRecords[index].printInfo();
+      cout << endl;
+      system("pause");
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
 }
 
 void admin_editStudent() {
-  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Student Record");
+  string userToEdit;
+  int index;
 
-  cout << endl;
-  system("pause");
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Student Record");
+    cout << "Enter username: ";
+    cin >> userToEdit;
+    index = searchStudents(userToEdit);
+
+    if (index != -1)
+      break;
+    else {
+      printError("\nStudent not found . . . ");
+      Sleep(1000);
+    }
+  } while (true);
+
+  int option;
+
+  do {
+    index = searchStudents(userToEdit);
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Student [" + studentRecords[index].getUsername() + "]");
+
+    cout << "1: Change Username\n";
+    cout << "2: Change Password\n";
+    cout << "3: Change First Name\n";
+    cout << "4: Change Last Name\n";
+    cout << "5: Change Contact Number\n";
+    cout << "6: Change City\n";
+    cout << "7: Change Program\n";
+    cout << "8: Change Semester\n";
+    cout << "9: Change Roll Number\n";
+    cout << "10: Change Subjects\n\n";
+    cout << "11: View current account info\n";
+    cout << "0: Go back\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Username");
+      studentRecords[index].inputUsername();
+      userToEdit = studentRecords[index].getUsername();
+      saveData();
+      printSuccess("Username changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 2:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Password");
+      studentRecords[index].inputPassword();
+      saveData();
+      printSuccess("Password changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 3:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s First Name");
+      studentRecords[index].inputFirstName();
+      saveData();
+      printSuccess("First Name changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 4:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Last Name");
+      studentRecords[index].inputLastName();
+      saveData();
+      printSuccess("Last Name changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 5:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Contact Number");
+      studentRecords[index].inputContactNumber();
+      saveData();
+      printSuccess("Contact Number changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 6:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s City");
+      studentRecords[index].inputCity();
+      saveData();
+      printSuccess("City changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 7:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Program");
+      studentRecords[index].inputProgram();
+      saveData();
+      printSuccess("Program changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 8:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Semester");
+      studentRecords[index].inputSemester();
+      saveData();
+      printSuccess("Semester changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 9:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Roll Number");
+      studentRecords[index].inputRollNo();
+      saveData();
+      printSuccess("Roll Number changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 10:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Student [" + studentRecords[index].getUsername() + "]'s Subjects");
+      studentRecords[index].inputSubjects();
+      saveData();
+      printSuccess("\nSubjects changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 11:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View Student [" + studentRecords[index].getUsername() + "]'s Account Info");
+      studentRecords[index].printInfo();
+      cout << endl;
+      system("pause");
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
 }
 
 void admin_editTeacher() {
-  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Teacher Record");
+  string userToEdit;
+  int index;
 
-  cout << endl;
-  system("pause");
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Teacher Record");
+    cout << "Enter username: ";
+    cin >> userToEdit;
+    index = searchTeachers(userToEdit);
+
+    if (index != -1)
+      break;
+    else {
+      printError("\nTeacher not found . . . ");
+      Sleep(1000);
+    }
+  } while (true);
+
+  int option;
+
+  do {
+    index = searchTeachers(userToEdit);
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Teacher [" + teacherRecords[index].getUsername() + "]");
+
+    cout << "1: Change Username\n";
+    cout << "2: Change Password\n";
+    cout << "3: Change First Name\n";
+    cout << "4: Change Last Name\n";
+    cout << "5: Change Contact Number\n";
+    cout << "6: Change City\n";
+    cout << "7: Change Department\n";
+    cout << "8: Change Joining Year\n";
+    cout << "9: Change ID Number\n\n";
+    cout << "10: View current account info\n";
+    cout << "0: Go back\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s Username");
+      teacherRecords[index].inputUsername();
+      userToEdit = teacherRecords[index].getUsername();
+      saveData();
+      printSuccess("Username changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 2:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s Password");
+      teacherRecords[index].inputPassword();
+      saveData();
+      printSuccess("Password changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 3:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s First Name");
+      teacherRecords[index].inputFirstName();
+      saveData();
+      printSuccess("First Name changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 4:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s Last Name");
+      teacherRecords[index].inputLastName();
+      saveData();
+      printSuccess("Last Name changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 5:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s Contact Number");
+      teacherRecords[index].inputContactNumber();
+      saveData();
+      printSuccess("Contact Number changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 6:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s City");
+      teacherRecords[index].inputCity();
+      saveData();
+      printSuccess("City changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 7:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s Department");
+      teacherRecords[index].inputDepartment();
+      saveData();
+      printSuccess("Department changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 8:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s Joining Year");
+      teacherRecords[index].inputYearJoined();
+      saveData();
+      printSuccess("Joining Year changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 9:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Change Teacher [" + teacherRecords[index].getUsername() + "]'s ID Number");
+      teacherRecords[index].inputIDNo();
+      saveData();
+      printSuccess("ID Number changed successfully\n\n");
+      system("pause");
+      break;
+
+    case 10:
+      printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View Teacher [" + teacherRecords[index].getUsername() + "]'s Account Info");
+      teacherRecords[index].printInfo();
+      cout << endl;
+      system("pause");
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
 }
 
 void admin_edit() {
