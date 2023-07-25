@@ -16,12 +16,20 @@ bool userExists(string username);
 
 // ----- Aesthetic & Utility Functions ----- //
 
+string toupperstr(string text) {
+  for (int i = 0; i < text.length(); i++)
+    text[i] = toupper(text[i]);
+  return text;
+}
+
 void setColor(int color) {
   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   SetConsoleTextAttribute(hConsole, color);
 }
 
 void printHeader(string text) {
+  system("cls");
+
   setColor(9);
   cout << "# ----- ";
   setColor(7);
@@ -70,16 +78,16 @@ void printError(string text) {
 class User {
 protected:
   static int userCount;
-  static char currentUserType;
-  static int currentUserIndex;
-  static string currentUserUsername;
+  static char activeUserType;
+  static int activeUserIndex;
+  static string activeUserUsername;
 
   string username;
   string password;
   string firstName;
   string lastName;
   string contactNo;
-  string address;
+  string city;
 
   bool lengthCheck(string text, int lenMin, int lenMax) {
     if (text.length() < lenMin || text.length() > lenMax)
@@ -99,14 +107,14 @@ public:
        string fN,
        string lN,
        string cN,
-       string add) {
+       string ct) {
     ++userCount;
     username = un;
     password = pw;
     firstName = fN;
     lastName = lN;
     contactNo = cN;
-    address = add;
+    city = ct;
   }
 
   // ----- Change Password Function ----- //
@@ -140,47 +148,47 @@ public:
 
   // ----- Setters ----- //
   static void setUserCount(int uC) { userCount = uC; }
-  static void setCurrentUserType(char cUT) { currentUserType = cUT; }
-  static void setCurrentUserIndex(int cUI) { currentUserIndex = cUI; }
-  static void setCurrentUserUsername(string cUUN) { currentUserUsername = cUUN; }
+  static void setActiveUserType(char aUT) { activeUserType = aUT; }
+  static void setActiveUserIndex(int aUI) { activeUserIndex = aUI; }
+  static void setActiveUserUsername(string aUUn) { activeUserUsername = aUUn; }
 
   // ----- Getters ----- //
   static int getUserCount() { return userCount; }
-  static char getCurrentUserType() { return currentUserType; }
-  static int getCurrentUserIndex() { return currentUserIndex; }
-  static string getCurrentUserUsername() { return currentUserUsername; }
+  static char getActiveUserType() { return activeUserType; }
+  static int getActiveUserIndex() { return activeUserIndex; }
+  static string getActiveUserUsername() { return activeUserUsername; }
 
   string getUsername() { return username; }
   string getPassword() { return password; }
   string getFirstName() { return firstName; }
   string getLastName() { return lastName; }
   string getContactNumber() { return contactNo; }
-  string getAddress() { return address; }
+  string getCity() { return city; }
 
   // ----- Input Setters ----- //
   void inputUsername() {
     string newUsername;
-    bool goodUsernameLength, validUsername;
+    bool goodLength, validUsername;
 
     do {
       do {
         cout << "Enter username: ";
         cin >> newUsername;
 
-        goodUsernameLength = lengthCheck(newUsername, 4, 20);
+        goodLength = lengthCheck(newUsername, 4, 20);
 
         validUsername = true;
         for (int i = 0; i < newUsername.length(); i++)
           if ((newUsername[i] < 'A' || newUsername[i] > 'Z') && (newUsername[i] < 'a' || newUsername[i] > 'z') && (newUsername[i] < '0' || newUsername[i] > '9'))
             validUsername = false;
 
-        if (!goodUsernameLength)
+        if (!goodLength)
           printError("Username should be between 4 & 20 characters\n");
         if (!validUsername)
           printError("Only letters and numbers are allowed in the username\n");
-        if (!goodUsernameLength || !validUsername)
+        if (!goodLength || !validUsername)
           cout << endl;
-      } while (!goodUsernameLength || !validUsername);
+      } while (!goodLength || !validUsername);
 
       if (newUsername == username)
         break;
@@ -215,14 +223,31 @@ public:
   }
 
   void inputContactNumber() {
-    cout << "Enter contact number: ";
-    cin >> contactNo;
+    bool goodLength, validNumber;
+
+    do {
+      cout << "Enter contact number: ";
+      cin >> contactNo;
+
+      goodLength = lengthCheck(contactNo, 7, 15);
+
+      validNumber = true;
+      for (int i = 0; i < contactNo.length(); i++)
+        if (contactNo[i] < '0' || contactNo[i] > '9')
+          validNumber = false;
+
+      if (!goodLength)
+        printError("Length should be between 7 & 15\n");
+      if (!validNumber)
+        printError("Only numbers are allowed\n");
+      if (!goodLength || !validNumber)
+        cout << endl;
+    } while (!goodLength || !validNumber);
   }
 
-  void inputAddress() {
-    cout << "Enter address: ";
-    cin.ignore(1, '\n');
-    getline(cin, address);
+  void inputCity() {
+    cout << "Enter city: ";
+    cin >> city;
   }
 
   void inputData() {
@@ -231,7 +256,7 @@ public:
     inputFirstName();
     inputLastName();
     inputContactNumber();
-    inputAddress();
+    inputCity();
   }
 };
 
@@ -251,8 +276,8 @@ public:
         string fN,
         string lN,
         string cN,
-        string add,
-        bool sA = false) : User(un, pw, fN, lN, cN, add) {
+        string ct,
+        bool sA = false) : User(un, pw, fN, lN, cN, ct) {
     ++adminCount;
     superAdmin = sA;
   }
@@ -334,14 +359,14 @@ public:
           string fN,
           string lN,
           string cN,
-          string add,
+          string ct,
           string p,
           int s,
           int rN,
           string sID,
           float sGPA,
           int nOS,
-          vector<Subject> sbj) : User(un, pw, fN, lN, cN, add) {
+          vector<Subject> sbj) : User(un, pw, fN, lN, cN, ct) {
     ++studentCount;
     program = p;
     semester = s;
@@ -392,7 +417,6 @@ public:
 
   // ----- Input Setters ----- //
   void inputProgram() {
-    cout << endl;
     for (int i = 0; i < 5; i++) {
       cout << i + 1 << ": " << offeredPrograms[i] << endl;
     }
@@ -458,8 +482,6 @@ public:
   }
 
   void inputSubjects() {
-    cout << endl;
-
     do {
       cout << "Input number of subjects (5-8): ";
       cin >> noOfSubjects;
@@ -476,6 +498,7 @@ public:
 
       cout << "Enter subject " << i + 1 << " code: ";
       cin >> tempSubject.code;
+      tempSubject.code = toupperstr(tempSubject.code);
       tempSubject.attendance = -1;
       tempSubject.gpa = -1;
 
@@ -485,6 +508,7 @@ public:
 
   void inputData() {
     User::inputData();
+    cout << endl;
     inputProgram();
     inputSemester();
     inputRollNo();
@@ -517,11 +541,11 @@ public:
           string fN,
           string lN,
           string cN,
-          string add,
+          string ct,
           string d,
           int yJ,
           int idN,
-          string tID) : User(un, pw, fN, lN, cN, add) {
+          string tID) : User(un, pw, fN, lN, cN, ct) {
     ++teacherCount;
     department = d;
     yearJoined = yJ;
@@ -551,7 +575,6 @@ public:
 
   // ----- Input Setters ----- //
   void inputDepartment() {
-    cout << endl;
     for (int i = 0; i < 5; i++) {
       cout << i + 1 << ": " << departments[i] << endl;
     }
@@ -580,7 +603,7 @@ public:
       cin >> yearJoined;
 
       if (yearJoined < minYear || yearJoined > maxYear)
-        printError("Year should be between " + to_string(minYear) + " & " + to_string(maxYear));
+        printError("Year should be between " + to_string(minYear) + " & " + to_string(maxYear) + "\n\n");
       else
         break;
     } while (true);
@@ -604,14 +627,22 @@ public:
     idNo = newID;
     createTeacherID();
   }
+
+  void inputData() {
+    User::inputData();
+    cout << endl;
+    inputDepartment();
+    inputYearJoined();
+    inputIDNo();
+  }
 };
 
 // ----- Initializing Static Variables ----- //
 
 int User::userCount = 0;
-char User::currentUserType = ' ';
-int User::currentUserIndex = -1;
-string User::currentUserUsername = "";
+char User::activeUserType = ' ';
+int User::activeUserIndex = -1;
+string User::activeUserUsername = "";
 
 int Admin::adminCount = 0;
 int Student::studentCount = 0;
@@ -666,12 +697,7 @@ int searchTeachers(int id) {
 }
 
 bool userExists(string username) {
-  int index;
-  index = searchAdmins(username);
-  index = searchStudents(username);
-  index = searchTeachers(username);
-
-  if (index == -1)
+  if (searchAdmins(username) == -1 && searchStudents(username) == -1 && searchTeachers(username) == -1)
     return false;
   else
     return true;
@@ -685,15 +711,15 @@ void sortData() {
   sort(teacherRecords.begin(), teacherRecords.end());
 
   // Update current user index in case data sort changes the object's place in the vector
-  switch (User::getCurrentUserType()) {
+  switch (User::getActiveUserType()) {
   case 'A':
-    User::setCurrentUserIndex(searchAdmins(User::getCurrentUserUsername()));
+    User::setActiveUserIndex(searchAdmins(User::getActiveUserUsername()));
     break;
   case 'S':
-    User::setCurrentUserIndex(searchStudents(User::getCurrentUserUsername()));
+    User::setActiveUserIndex(searchStudents(User::getActiveUserUsername()));
     break;
   case 'T':
-    User::setCurrentUserIndex(searchTeachers(User::getCurrentUserUsername()));
+    User::setActiveUserIndex(searchTeachers(User::getActiveUserUsername()));
     break;
   }
 }
@@ -720,7 +746,7 @@ void saveData() {
     writer << adminRecords[i].getFirstName() << ",";
     writer << adminRecords[i].getLastName() << ",";
     writer << adminRecords[i].getContactNumber() << ",";
-    writer << adminRecords[i].getAddress() << ",";
+    writer << adminRecords[i].getCity() << ",";
     writer << adminRecords[i].getSuperAdminStatus() << endl;
   }
 
@@ -730,7 +756,7 @@ void saveData() {
     writer << studentRecords[i].getFirstName() << ",";
     writer << studentRecords[i].getLastName() << ",";
     writer << studentRecords[i].getContactNumber() << ",";
-    writer << studentRecords[i].getAddress() << ",";
+    writer << studentRecords[i].getCity() << ",";
     writer << studentRecords[i].getProgram() << ",";
     writer << studentRecords[i].getSemester() << ",";
     writer << studentRecords[i].getRollNo() << ",";
@@ -757,7 +783,7 @@ void saveData() {
     writer << teacherRecords[i].getFirstName() << ",";
     writer << teacherRecords[i].getLastName() << ",";
     writer << teacherRecords[i].getContactNumber() << ",";
-    writer << teacherRecords[i].getAddress() << ",";
+    writer << teacherRecords[i].getCity() << ",";
     writer << teacherRecords[i].getDepartment() << ",";
     writer << teacherRecords[i].getYearJoined() << ",";
     writer << teacherRecords[i].getIDNo() << ",";
@@ -818,9 +844,9 @@ void loadData() {
       for (int j = 0; j < noOfSubjects; j++) {
         Subject tempSubject;
 
-        tempSubject.code = items[12 + j];
-        tempSubject.attendance = stoi(items[13 + j]);
-        tempSubject.gpa = stof(items[14 + j]);
+        tempSubject.code = items[12 + (j * 3)];
+        tempSubject.attendance = stoi(items[13 + (j * 3)]);
+        tempSubject.gpa = stof(items[14 + (j * 3)]);
 
         subjects.push_back(tempSubject);
       }
@@ -895,7 +921,6 @@ void login() {
   bool loggedIn = false;
 
   do {
-    system("cls");
     printHeader("University Management System");
     cout << "Username: ";
     cin >> username;
@@ -906,10 +931,10 @@ void login() {
     for (int i = 0; i < adminRecords.size(); i++) {
       if (adminRecords[i].getUsername() == username && adminRecords[i].getPassword() == password) {
         loggedIn = true;
-        User::setCurrentUserType('A');
-        User::setCurrentUserIndex(i);
-        User::setCurrentUserUsername(username);
-        printSuccess("Login Successful . . . ");
+        User::setActiveUserType('A');
+        User::setActiveUserIndex(i);
+        User::setActiveUserUsername(username);
+        printSuccess("Login successful . . . ");
         Sleep(1000);
         break;
       }
@@ -918,10 +943,10 @@ void login() {
     for (int i = 0; i < studentRecords.size(); i++) {
       if (studentRecords[i].getUsername() == username && studentRecords[i].getPassword() == password) {
         loggedIn = true;
-        User::setCurrentUserType('S');
-        User::setCurrentUserIndex(i);
-        User::setCurrentUserUsername(username);
-        printSuccess("Login Successful . . . ");
+        User::setActiveUserType('S');
+        User::setActiveUserIndex(i);
+        User::setActiveUserUsername(username);
+        printSuccess("Login successful . . . ");
         Sleep(1000);
         break;
       }
@@ -930,10 +955,10 @@ void login() {
     for (int i = 0; i < teacherRecords.size(); i++) {
       if (teacherRecords[i].getUsername() == username && teacherRecords[i].getPassword() == password) {
         loggedIn = true;
-        User::setCurrentUserType('T');
-        User::setCurrentUserIndex(i);
-        User::setCurrentUserUsername(username);
-        printSuccess("Login Successful . . . ");
+        User::setActiveUserType('T');
+        User::setActiveUserIndex(i);
+        User::setActiveUserUsername(username);
+        printSuccess("Login successful . . . ");
         Sleep(1000);
         break;
       }
@@ -952,28 +977,27 @@ void login() {
 
 // Admin View Functions
 void admin_viewAdmins() {
-  system("cls");
-  printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View Admins");
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View Admins");
 
   setColor(14);
-  cout << left << setw(21) << "Username";
-  cout << left << setw(21) << "Full Name";
-  cout << left << setw(15) << "Super Admin";
-  cout << left << setw(21) << "Contact No";
-  cout << "Address\n";
+  cout << left << setw(23) << "Username";
+  cout << left << setw(23) << "Full Name";
+  cout << left << setw(14) << "Super Admin";
+  cout << left << setw(18) << "Contact No";
+  cout << "City\n";
   setColor(7);
 
   for (int i = 0; i < adminRecords.size(); i++) {
-    cout << left << setw(21) << adminRecords[i].getUsername();
-    cout << left << setw(21) << adminRecords[i].getFirstName() + " " + adminRecords[i].getLastName();
+    cout << left << setw(23) << adminRecords[i].getUsername();
+    cout << left << setw(23) << adminRecords[i].getFirstName() + " " + adminRecords[i].getLastName();
 
     if (adminRecords[i].getSuperAdminStatus())
-      cout << left << setw(15) << "Yes";
+      cout << left << setw(14) << "Yes";
     else
-      cout << left << setw(15) << "No";
+      cout << left << setw(14) << "No";
 
-    cout << left << setw(21) << adminRecords[i].getContactNumber();
-    cout << adminRecords[i].getAddress() << endl;
+    cout << left << setw(18) << adminRecords[i].getContactNumber();
+    cout << adminRecords[i].getCity() << endl;
   }
 
   cout << endl;
@@ -981,32 +1005,33 @@ void admin_viewAdmins() {
 }
 
 void admin_viewStudents() {
-  system("cls");
-  printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View Students");
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View Students");
 
   setColor(14);
-  cout << left << setw(21) << "Username";
-  cout << left << setw(21) << "Full Name";
-  cout << left << setw(17) << "Student ID";
-  cout << left << setw(11) << "SGPA";
+  cout << left << setw(23) << "Username";
+  cout << left << setw(23) << "Full Name";
+  cout << left << setw(15) << "Student ID";
+  cout << left << setw(7) << "SGPA";
   cout << left << setw(11) << "Subjects";
-  cout << left << setw(21) << "Contact No";
-  cout << "Address\n";
+  cout << left << setw(18) << "Contact No";
+  cout << "City\n";
   setColor(7);
 
   for (int i = 0; i < studentRecords.size(); i++) {
-    cout << left << setw(21) << studentRecords[i].getUsername();
-    cout << left << setw(21) << studentRecords[i].getFirstName() + " " + studentRecords[i].getLastName();
-    cout << left << setw(17) << studentRecords[i].getStudentID();
+    cout << left << setw(23) << studentRecords[i].getUsername();
+    cout << left << setw(23) << studentRecords[i].getFirstName() + " " + studentRecords[i].getLastName();
+    cout << left << setw(15) << studentRecords[i].getStudentID();
 
-    if (studentRecords[i].getSemesterGPA() == -1)
-      cout << left << setw(11) << "NA";
-    else
-      cout << left << setw(11) << studentRecords[i].getSemesterGPA();
+    if (studentRecords[i].getSemesterGPA() == -1) {
+      setColor(8);
+      cout << left << setw(7) << "NA";
+      setColor(7);
+    } else
+      cout << left << setw(7) << studentRecords[i].getSemesterGPA();
 
     cout << left << setw(11) << studentRecords[i].getNoOfSubjects();
-    cout << left << setw(21) << studentRecords[i].getContactNumber();
-    cout << studentRecords[i].getAddress() << endl;
+    cout << left << setw(18) << studentRecords[i].getContactNumber();
+    cout << studentRecords[i].getCity() << endl;
   }
 
   cout << endl;
@@ -1014,23 +1039,22 @@ void admin_viewStudents() {
 }
 
 void admin_viewTeachers() {
-  system("cls");
-  printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View Teachers");
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View Teachers");
 
   setColor(14);
-  cout << left << setw(21) << "Username";
-  cout << left << setw(21) << "Full Name";
-  cout << left << setw(17) << "Teacher ID";
-  cout << left << setw(21) << "Contact No";
-  cout << "Address\n";
+  cout << left << setw(23) << "Username";
+  cout << left << setw(23) << "Full Name";
+  cout << left << setw(14) << "Teacher ID";
+  cout << left << setw(18) << "Contact No";
+  cout << "City\n";
   setColor(7);
 
   for (int i = 0; i < teacherRecords.size(); i++) {
-    cout << left << setw(21) << teacherRecords[i].getUsername();
-    cout << left << setw(21) << teacherRecords[i].getFirstName() + " " + studentRecords[i].getLastName();
-    cout << left << setw(17) << teacherRecords[i].getTeacherID();
-    cout << left << setw(21) << teacherRecords[i].getContactNumber();
-    cout << teacherRecords[i].getAddress() << endl;
+    cout << left << setw(23) << teacherRecords[i].getUsername();
+    cout << left << setw(23) << teacherRecords[i].getFirstName() + " " + studentRecords[i].getLastName();
+    cout << left << setw(14) << teacherRecords[i].getTeacherID();
+    cout << left << setw(18) << teacherRecords[i].getContactNumber();
+    cout << teacherRecords[i].getCity() << endl;
   }
 
   cout << endl;
@@ -1041,12 +1065,11 @@ void admin_view() {
   int option;
 
   do {
-    system("cls");
-    printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "] > View");
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > View");
 
     cout << "1: Admins\n";
     cout << "2: Students\n";
-    cout << "3: Teacher\n\n";
+    cout << "3: Teachers\n\n";
     cout << "0: Go Back\n\n";
 
     cout << "Choose an option: ";
@@ -1076,19 +1099,226 @@ void admin_view() {
   } while (option != 0);
 }
 
+// Admin Create Functions
+void admin_createAdmin() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Create Admin Record");
+
+  Admin newAdmin(true);
+  newAdmin.inputData();
+  adminRecords.push_back(newAdmin);
+  saveData();
+  printSuccess("\nAdmin record created successfully!\n\n");
+  system("pause");
+}
+
+void admin_createStudent() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Create Student Record");
+
+  Student newStudent(true);
+  newStudent.inputData();
+  studentRecords.push_back(newStudent);
+  saveData();
+  printSuccess("\nStudent record created successfully!\n\n");
+  system("pause");
+}
+
+void admin_createTeacher() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Create Teacher Record");
+
+  Teacher newTeacher(true);
+  newTeacher.inputData();
+  teacherRecords.push_back(newTeacher);
+  saveData();
+  printSuccess("\nTeacher record created successfully!\n\n");
+  system("pause");
+}
+
+void admin_create() {
+  int option;
+
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Create");
+
+    cout << "1: Admin\n";
+    cout << "2: Student\n";
+    cout << "3: Teacher\n\n";
+    cout << "0: Go Back\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      if (!adminRecords[User::getActiveUserIndex()].getSuperAdminStatus()) {
+        printError("Permission denied . . . ");
+        Sleep(1000);
+      } else {
+        admin_createAdmin();
+      }
+      break;
+
+    case 2:
+      admin_createStudent();
+      break;
+
+    case 3:
+      admin_createTeacher();
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
+}
+
+// Admin Edit Functions
+void admin_editAdmin() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Admin Record");
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_editStudent() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Student Record");
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_editTeacher() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit Teacher Record");
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_edit() {
+  int option;
+
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Edit");
+
+    cout << "1: Admin\n";
+    cout << "2: Student\n";
+    cout << "3: Teacher\n\n";
+    cout << "0: Go Back\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      if (!adminRecords[User::getActiveUserIndex()].getSuperAdminStatus()) {
+        printError("Permission denied . . . ");
+        Sleep(1000);
+      } else {
+        admin_editAdmin();
+      }
+      break;
+
+    case 2:
+      admin_editStudent();
+      break;
+
+    case 3:
+      admin_editTeacher();
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
+}
+
+// Admin Delete Functions
+void admin_deleteAdmin() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Admin Record");
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_deleteStudent() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Student Record");
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_deleteTeacher() {
+  printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete Teacher Record");
+
+  cout << endl;
+  system("pause");
+}
+
+void admin_delete() {
+  int option;
+
+  do {
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "] > Delete");
+
+    cout << "1: Admin\n";
+    cout << "2: Student\n";
+    cout << "3: Teacher\n\n";
+    cout << "0: Go Back\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      if (!adminRecords[User::getActiveUserIndex()].getSuperAdminStatus()) {
+        printError("Permission denied . . . ");
+        Sleep(1000);
+      } else {
+        admin_deleteAdmin();
+      }
+      break;
+
+    case 2:
+      admin_deleteStudent();
+      break;
+
+    case 3:
+      admin_deleteTeacher();
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
+}
+
 // Admin Panel
 void admin_panel() {
   int option;
 
   do {
-    system("cls");
-    printHeader("UMS > Admin Panel [" + User::getCurrentUserUsername() + "]");
+    printHeader("UMS > Admin Panel [" + User::getActiveUserUsername() + "]");
 
     cout << "1: View\n";
     cout << "2: Create\n";
     cout << "3: Edit\n";
     cout << "4: Delete\n\n";
-    cout << "5: Change Account Info\n";
+    cout << "5: View Account Info\n";
+    cout << "6: Change Account Password\n";
     cout << "0: Exit UMS\n\n";
 
     cout << "Choose an option: ";
@@ -1100,18 +1330,22 @@ void admin_panel() {
       break;
 
     case 2:
-      /* code */
+      admin_create();
       break;
 
     case 3:
-      /* code */
+      admin_edit();
       break;
 
     case 4:
-      /* code */
+      admin_delete();
       break;
 
     case 5:
+      /* code */
+      break;
+
+    case 6:
       /* code */
       break;
 
@@ -1128,11 +1362,88 @@ void admin_panel() {
 
 // ----- Student Functions ----- //
 
-void student_panel() {}
+void student_panel() {
+  int option;
+
+  do {
+    printHeader("UMS > Student Panel [" + User::getActiveUserUsername() + "]");
+
+    cout << "1: Academic Dashboard\n\n";
+    cout << "2: View Account Info\n";
+    cout << "3: Change Account Password\n";
+    cout << "0: Exit UMS\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      /* code */
+      break;
+
+    case 2:
+      /* code */
+      break;
+
+    case 3:
+      /* code */
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
+}
 
 // ----- Teacher Functions ----- //
 
-void teacher_panel() {}
+void teacher_panel() {
+  int option;
+
+  do {
+    printHeader("UMS > Teacher Panel [" + User::getActiveUserUsername() + "]");
+
+    cout << "1: Mark Attendance\n";
+    cout << "2: Mark GPA\n\n";
+    cout << "3: View Account Info\n";
+    cout << "4: Change Account Password\n";
+    cout << "0: Exit UMS\n\n";
+
+    cout << "Choose an option: ";
+    cin >> option;
+
+    switch (option) {
+    case 1:
+      /* code */
+      break;
+
+    case 2:
+      /* code */
+      break;
+
+    case 3:
+      /* code */
+      break;
+
+    case 4:
+      /* code */
+      break;
+
+    case 0:
+      break;
+
+    default:
+      printError("Invalid option . . . ");
+      Sleep(1000);
+      break;
+    }
+  } while (option != 0);
+}
 
 // ----- Main Function ----- //
 
@@ -1140,7 +1451,7 @@ int main() {
   loadData();
   login();
 
-  switch (User::getCurrentUserType()) {
+  switch (User::getActiveUserType()) {
   case 'A':
     admin_panel();
     break;
