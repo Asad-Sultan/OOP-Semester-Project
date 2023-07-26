@@ -1902,6 +1902,78 @@ void admin_panel() {
 
 // ----- Student Functions ----- //
 
+void printAttendance(int percentage) {
+  if (percentage == -1) {
+    setColor(11);
+    cout << "Not Marked\n";
+    setColor(7);
+  } else {
+
+    setColor(15);
+    cout << left << setw(7) << to_string(percentage) + "% -";
+    cout << "{";
+    setColor(7);
+
+    if (percentage >= 80)
+      setColor(10);
+    else if (percentage >= 70)
+      setColor(6);
+    else
+      setColor(12);
+
+    for (int i = 0; i < (percentage / 4); i++) {
+      cout << "#";
+    }
+
+    int barLength = (25 - (percentage / 4)) + 1;
+    if (percentage < 100)
+      barLength++;
+
+    setColor(15);
+    cout << right << setw(barLength) << "}\n";
+    setColor(7);
+  }
+}
+
+void student_academicDashboard() {
+  vector<Subject> sbjcts = studentRecords[User::getActiveUserIndex()].getSubjects();
+  printHeader("UMS > Student Panel [" + User::getActiveUserUsername() + "] > Academic Dashboard");
+  for (int i = 0; i < sbjcts.size(); i++) {
+    setColor(14);
+    cout << "Code: ";
+    setColor(15);
+    cout << sbjcts[i].code << endl;
+
+    setColor(14);
+    cout << "GPA: ";
+
+    if (sbjcts[i].gpa == -1) {
+      setColor(11);
+      cout << "Not Marked\n";
+      setColor(7);
+    } else {
+      if (sbjcts[i].gpa >= 3)
+        setColor(10);
+      else if (sbjcts[i].gpa >= 2)
+        setColor(6);
+      else
+        setColor(12);
+
+      cout << ceil(sbjcts[i].gpa * 100.0) / 100.0 << endl;
+      setColor(7);
+    }
+
+    setColor(14);
+    cout << "Attendance: ";
+    setColor(7);
+    printAttendance(sbjcts[i].attendance);
+
+    cout << endl;
+  }
+
+  system("pause");
+}
+
 void student_panel() {
   int option;
 
@@ -1918,7 +1990,7 @@ void student_panel() {
 
     switch (option) {
     case 1:
-      /* code */
+      student_academicDashboard();
       break;
 
     case 2:
