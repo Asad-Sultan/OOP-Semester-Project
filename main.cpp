@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <conio.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -999,9 +1000,29 @@ void login() {
     printHeader("University Management System");
     cout << "Username: ";
     cin >> username;
+
+    char enteredChar;
     cout << "Password: ";
-    cin >> password;
-    cout << endl;
+    password = "";
+    do {
+      enteredChar = getch();
+
+      if (enteredChar == '\r') {
+        cout << endl;
+        break;
+      } else if (enteredChar == '\b') {
+        if (password.length() == 0) {
+          continue;
+        } else {
+          cout << "\b \b";
+          password = password.substr(0, password.length() - 1);
+        }
+
+      } else {
+        password += enteredChar;
+        cout << "*";
+      }
+    } while (true);
 
     for (int i = 0; i < adminRecords.size(); i++) {
       if (adminRecords[i].getUsername() == username && adminRecords[i].getPassword() == password) {
@@ -1910,7 +1931,7 @@ void printAttendance(int percentage) {
   } else {
 
     setColor(15);
-    cout << left << setw(7) << to_string(percentage) + "% -";
+    cout << left << setw(5) << to_string(percentage) + "%";
     cout << "{";
     setColor(7);
 
@@ -1938,6 +1959,40 @@ void printAttendance(int percentage) {
 void student_academicDashboard() {
   vector<Subject> sbjcts = studentRecords[User::getActiveUserIndex()].getSubjects();
   printHeader("UMS > Student Panel [" + User::getActiveUserUsername() + "] > Academic Dashboard");
+
+  cout << "Program: ";
+  setColor(13);
+  cout << left << setw(11) << studentRecords[User::getActiveUserIndex()].getProgram();
+  setColor(7);
+
+  cout << "Student ID: ";
+  setColor(13);
+  cout << studentRecords[User::getActiveUserIndex()].getStudentID() << endl;
+  setColor(7);
+
+  cout << "Semester: ";
+  setColor(13);
+  cout << left << setw(10) << studentRecords[User::getActiveUserIndex()].getSemester();
+  setColor(7);
+
+  cout << "Semester GPA: ";
+  if (studentRecords[User::getActiveUserIndex()].getSemesterGPA() == -1) {
+    setColor(11);
+    cout << "Not Marked\n";
+    setColor(7);
+  } else {
+    if (studentRecords[User::getActiveUserIndex()].getSemesterGPA() >= 3)
+      setColor(10);
+    else if (studentRecords[User::getActiveUserIndex()].getSemesterGPA() >= 2)
+      setColor(6);
+    else
+      setColor(12);
+
+    cout << studentRecords[User::getActiveUserIndex()].getSemesterGPA() << endl;
+  }
+
+  cout << endl;
+
   for (int i = 0; i < sbjcts.size(); i++) {
     setColor(14);
     cout << "Code: ";
